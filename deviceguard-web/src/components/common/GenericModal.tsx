@@ -1,12 +1,8 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+"use client";
+
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Cancel01Icon } from "hugeicons-react";
 
 interface GenericModalProps {
   open: boolean;
@@ -16,7 +12,6 @@ interface GenericModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
-  showCloseButton?: boolean;
 }
 
 const SIZE_CLASSES = {
@@ -34,19 +29,59 @@ export function GenericModal({
   children,
   footer,
   size = "md",
-  showCloseButton = true,
 }: GenericModalProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={SIZE_CLASSES[size]}>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
-        </DialogHeader>
-        <div className="py-4">{children}</div>
-        {footer && <DialogFooter>{footer}</DialogFooter>}
-      </DialogContent>
-    </Dialog>
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => onOpenChange(false)}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+          >
+            <div
+              className={`bg-white border border-carbon_black-600 rounded-lg shadow-2xl ${SIZE_CLASSES[size]} w-full max-h-[90vh] overflow-y-auto pointer-events-auto`}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-carbon_black-600">
+                <div>
+                  <h2 className="text-lg font-semibold text-carbon_black">
+                    {title}
+                  </h2>
+                  {description && (
+                    <p className="text-sm text-silver-400 mt-1">
+                      {description}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onOpenChange(false)}
+                  className="text-silver-400 hover:text-carbon_black hover:bg-silver-100"
+                >
+                  <Cancel01Icon size={20} />
+                </Button>
+              </div>
+              <div className="p-6">{children}</div>
+              {footer && (
+                <div className="flex justify-end gap-2 p-6 border-t border-carbon_black-600">
+                  {footer}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 

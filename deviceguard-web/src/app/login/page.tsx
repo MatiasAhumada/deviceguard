@@ -23,7 +23,7 @@ export default function LoginPage() {
     const success = await login(email, password);
 
     if (success) {
-      router.push(ROUTES.DASHBOARD);
+      router.push(ROUTES.HOME);
     }
 
     setLoading(false);

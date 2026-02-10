@@ -19,10 +19,6 @@ export default function proxy(request: NextRequest) {
   try {
     jwtUtils.verify(token);
 
-    if (pathname === ROUTES.HOME) {
-      return NextResponse.redirect(new URL(ROUTES.DASHBOARD, request.url));
-    }
-
     return NextResponse.next();
   } catch {
     const response = NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));

@@ -3,7 +3,13 @@ import { bcryptUtils } from "@/utils/bcrypt.util";
 import { jwtUtils } from "@/utils/jwt.util";
 import { ApiError } from "@/utils/handlers/apiError.handler";
 import { AUTH_MESSAGES } from "@/constants/auth.constant";
-import { LoginDto, RegisterDto, AuthResponse, AuthUser } from "@/types/auth.types";
+import {
+  LoginDto,
+  RegisterDto,
+  AuthResponse,
+  AuthUser,
+} from "@/types/auth.types";
+import { prisma } from "@/lib/prisma";
 import httpStatus from "http-status";
 import { UserRole } from "@prisma/client";
 
@@ -41,7 +47,7 @@ export class AuthService {
       name: user.name,
       email: user.email,
       role: user.role,
-      superAdminId: user.admin?.superAdminId,
+      superAdminId: user.superAdmin?.id || user.admin?.superAdminId,
       adminId: user.admin?.id,
     };
 
@@ -49,7 +55,7 @@ export class AuthService {
       userId: user.id,
       email: user.email,
       role: user.role,
-      superAdminId: user.admin?.superAdminId,
+      superAdminId: user.superAdmin?.id || user.admin?.superAdminId,
       adminId: user.admin?.id,
     });
 
@@ -68,20 +74,37 @@ export class AuthService {
 
     const hashedPassword = await bcryptUtils.hash(data.password);
 
-    const user = await this.authRepository.createUser({
-      name: data.name,
-      email: data.email,
-      password: hashedPassword,
-      role: data.role,
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          password: hashedPassword,
+          role: data.role,
+        },
+      });
+
+      if (data.role === UserRole.SUPER_ADMIN) {
+        await tx.superAdmin.create({
+          data: { userId: user.id },
+        });
+      } else if (data.role === UserRole.ADMIN && data.superAdminId) {
+        await tx.admin.create({
+          data: {
+            userId: user.id,
+            superAdminId: data.superAdminId,
+          },
+        });
+      }
+
+      return tx.user.findUnique({
+        where: { id: user.id },
+        include: {
+          superAdmin: true,
+          admin: true,
+        },
+      });
     });
-
-    if (data.role === UserRole.SUPER_ADMIN) {
-      await this.authRepository.createSuperAdmin(user.id);
-    } else if (data.role === UserRole.ADMIN && data.superAdminId) {
-      await this.authRepository.createAdmin(user.id, data.superAdminId);
-    }
-
-    const updatedUser = await this.authRepository.findUserById(user.id);
 
     if (!updatedUser) {
       throw new ApiError({
@@ -95,7 +118,8 @@ export class AuthService {
       name: updatedUser.name,
       email: updatedUser.email,
       role: updatedUser.role,
-      superAdminId: updatedUser.admin?.superAdminId,
+      superAdminId:
+        updatedUser.superAdmin?.id || updatedUser.admin?.superAdminId,
       adminId: updatedUser.admin?.id,
     };
 
@@ -103,7 +127,8 @@ export class AuthService {
       userId: updatedUser.id,
       email: updatedUser.email,
       role: updatedUser.role,
-      superAdminId: updatedUser.admin?.superAdminId,
+      superAdminId:
+        updatedUser.superAdmin?.id || updatedUser.admin?.superAdminId,
       adminId: updatedUser.admin?.id,
     });
 
@@ -126,7 +151,7 @@ export class AuthService {
       name: user.name,
       email: user.email,
       role: user.role,
-      superAdminId: user.admin?.superAdminId,
+      superAdminId: user.superAdmin?.id || user.admin?.superAdminId,
       adminId: user.admin?.id,
     };
   }

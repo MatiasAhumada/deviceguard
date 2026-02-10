@@ -3,7 +3,9 @@ import { Prisma } from "@prisma/client";
 
 export class DevicesRepository {
   async create(data: Prisma.DeviceCreateInput) {
-    return prisma.device.create({ data });
+    return prisma.$transaction(async (tx) => {
+      return tx.device.create({ data });
+    });
   }
 
   async findAll() {
@@ -19,15 +21,19 @@ export class DevicesRepository {
   }
 
   async update(id: string, data: Prisma.DeviceUpdateInput) {
-    return prisma.device.update({
-      where: { id },
-      data,
+    return prisma.$transaction(async (tx) => {
+      return tx.device.update({
+        where: { id },
+        data,
+      });
     });
   }
 
   async delete(id: string) {
-    return prisma.device.delete({
-      where: { id },
+    return prisma.$transaction(async (tx) => {
+      return tx.device.delete({
+        where: { id },
+      });
     });
   }
 }

@@ -21,6 +21,8 @@ export function StatCard({
   icon: Icon,
   iconColor,
 }: StatCardProps) {
+  const isZero = value === "0" || value === 0;
+
   return (
     <Card className="border-carbon_black-600 shadow-sm bg-carbon_black">
       <CardContent className="p-6">
@@ -38,12 +40,14 @@ export function StatCard({
             {trend && (
               <p
                 className={`text-sm mt-2 font-medium ${
-                  trend.isPositive
-                    ? "text-dark_garnet-700"
-                    : "text-mahogany_red"
+                  isZero
+                    ? "text-warning"
+                    : trend.isPositive
+                      ? "text-success"
+                      : "text-strawberry_red"
                 }`}
               >
-                {trend.isPositive ? "↑" : "↓"} {trend.value}
+                {isZero ? "⚠" : trend.isPositive ? "↑" : "↓"} {trend.value}
               </p>
             )}
           </div>
