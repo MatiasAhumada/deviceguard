@@ -96,11 +96,7 @@ export function ConfirmModal({
           <Button variant="outline" onClick={handleCancel} disabled={loading}>
             {cancelText}
           </Button>
-          <Button
-            variant={variant}
-            onClick={handleConfirm}
-            disabled={loading}
-          >
+          <Button variant={variant} onClick={handleConfirm} disabled={loading}>
             {loading ? "Procesando..." : confirmText}
           </Button>
         </>

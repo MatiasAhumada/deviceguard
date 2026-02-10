@@ -3,7 +3,11 @@
 import { useState, useEffect } from "react";
 import { authService } from "@/services/auth.service";
 import { AuthUser } from "@/types/auth.types";
-import { clientErrorHandler } from "@/utils/handlers/clientError.handler";
+import {
+  clientErrorHandler,
+  clientSuccessHandler,
+} from "@/utils/handlers/clientError.handler";
+import { AUTH_MESSAGES } from "@/constants/auth.constant";
 
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -28,6 +32,7 @@ export function useAuth() {
     try {
       const { user: authUser } = await authService.login({ email, password });
       setUser(authUser);
+      clientSuccessHandler(AUTH_MESSAGES.LOGIN_SUCCESS);
       return true;
     } catch (error) {
       clientErrorHandler(error);
@@ -39,6 +44,7 @@ export function useAuth() {
     try {
       await authService.logout();
       setUser(null);
+      clientSuccessHandler(AUTH_MESSAGES.LOGOUT_SUCCESS);
       return true;
     } catch (error) {
       clientErrorHandler(error);

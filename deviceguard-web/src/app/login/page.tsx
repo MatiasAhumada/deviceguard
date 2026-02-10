@@ -30,17 +30,27 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-onyx">
+      <Card className="w-full max-w-md bg-carbon_black border-carbon_black-600">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">
-            Iniciar Sesión
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-mahogany_red rounded-lg flex items-center justify-center font-bold text-white">
+              DG
+            </div>
+          </div>
+          <CardTitle className="text-2xl text-center text-white">
+            DeviceGuard
           </CardTitle>
+          <p className="text-center text-silver-400 text-sm mt-2">
+            Iniciar Sesión
+          </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-silver-300">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -48,10 +58,13 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
+                className="bg-onyx-600 border-carbon_black-700 text-white placeholder:text-silver-400 focus:border-mahogany_red focus:ring-mahogany_red"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password" className="text-silver-300">
+                Contraseña
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -59,9 +72,14 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
+                className="bg-onyx-600 border-carbon_black-700 text-white placeholder:text-silver-400 focus:border-mahogany_red focus:ring-mahogany_red"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full bg-mahogany_red hover:bg-mahogany_red-600 text-white"
+              disabled={loading}
+            >
               {loading ? "Iniciando..." : "Iniciar Sesión"}
             </Button>
           </form>
