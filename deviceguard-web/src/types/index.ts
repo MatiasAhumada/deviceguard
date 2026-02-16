@@ -1,4 +1,4 @@
-import { Device, Admin, SuperAdmin, Client, Prisma } from "@prisma/client";
+import { Device, Admin, SuperAdmin, Client, Prisma, Phone, Address } from "@prisma/client";
 
 export type { Device, Admin, SuperAdmin, Client };
 
@@ -15,4 +15,10 @@ export type UpdateClientDto = Prisma.ClientUpdateInput & {
   adminId?: string;
   phones?: Prisma.PhoneCreateWithoutClientInput[];
   addresses?: Prisma.AddressCreateWithoutClientInput[];
+};
+
+export type ClientWithRelations = Client & {
+  phones: Phone[];
+  addresses: Address[];
+  devices: Device[];
 };

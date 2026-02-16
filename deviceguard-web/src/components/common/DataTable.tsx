@@ -22,6 +22,7 @@ interface DataTableProps<T> {
   onSearch?: (value: string) => void;
   actions?: ReactNode;
   totalLabel?: string;
+  onRowClick?: (item: T) => void;
 }
 
 export function DataTable<T>({
@@ -36,6 +37,7 @@ export function DataTable<T>({
   onSearch,
   actions,
   totalLabel,
+  onRowClick,
 }: DataTableProps<T>) {
   return (
     <div className="space-y-6">
@@ -110,7 +112,10 @@ export function DataTable<T>({
                   data.map((item) => (
                     <tr
                       key={keyExtractor(item)}
-                      className="border-b border-carbon_black-700 hover:bg-onyx-600 transition-colors"
+                      onClick={() => onRowClick?.(item)}
+                      className={`border-b border-carbon_black-700 hover:bg-onyx-600 transition-colors ${
+                        onRowClick ? "cursor-pointer sm:cursor-default" : ""
+                      }`}
                     >
                       {columns.map((column) => (
                         <td key={column.key} className="py-4">

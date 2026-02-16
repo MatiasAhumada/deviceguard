@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { GenericModal } from "@/components/common/GenericModal";
 import { createClientSchema, CreateClientDto } from "@/schemas/client.schema";
 import { clientService } from "@/services/client.service";
+import { ClientWithRelations } from "@/types";
 import {
   clientErrorHandler,
   clientSuccessHandler,
@@ -25,6 +26,7 @@ import {
 import { useDebounce } from "@/hooks/useDebounce";
 import { PhoneType } from "@prisma/client";
 import { createPortal } from "react-dom";
+import { getCenteredMenuPosition } from "@/utils/menu.util";
 
 export default function ClientsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,16 +37,18 @@ export default function ClientsPage() {
     addresses: [],
   });
   const [errors, setErrors] = useState<any>({});
-  const [clients, setClients] = useState<any[]>([]);
+  const [clients, setClients] = useState<ClientWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 300);
-  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [selectedClient, setSelectedClient] =
+    useState<ClientWithRelations | null>(null);
   const [isViewMode, setIsViewMode] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [clientToDelete, setClientToDelete] = useState<any>(null);
+  const [clientToDelete, setClientToDelete] =
+    useState<ClientWithRelations | null>(null);
 
   useEffect(() => {
     loadClients();
@@ -53,6 +57,12 @@ export default function ClientsPage() {
   useEffect(() => {
     loadClients(debouncedSearch || undefined);
   }, [debouncedSearch]);
+
+  useEffect(() => {
+    if (isModalOpen || isDeleteModalOpen) {
+      setOpenMenuId(null);
+    }
+  }, [isModalOpen, isDeleteModalOpen]);
 
   const loadClients = async (search?: string) => {
     try {
@@ -74,39 +84,61 @@ export default function ClientsPage() {
     setIsModalOpen(true);
   };
 
-  const handleViewClient = (client: any) => {
+  const handleViewClient = (client: ClientWithRelations) => {
     setSelectedClient(client);
     setFormData({
       name: client.name,
       email: client.email || "",
-      phones: client.phones || [],
-      addresses: client.addresses || [],
+      phones: client.phones.map((p) => ({
+        number: p.number,
+        type: p.type,
+        referencia: p.referencia || "",
+      })),
+      addresses: client.addresses.map((a) => ({
+        street: a.street,
+        city: a.city,
+        state: a.state || "",
+        zipCode: a.zipCode || "",
+        country: a.country || "",
+        nota: a.nota || "",
+      })),
     });
     setIsViewMode(true);
     setOpenMenuId(null);
     setIsModalOpen(true);
   };
 
-  const handleEditClient = (client: any) => {
+  const handleEditClient = (client: ClientWithRelations) => {
     setSelectedClient(client);
     setFormData({
       name: client.name,
       email: client.email || "",
-      phones: client.phones || [],
-      addresses: client.addresses || [],
+      phones: client.phones.map((p) => ({
+        number: p.number,
+        type: p.type,
+        referencia: p.referencia || "",
+      })),
+      addresses: client.addresses.map((a) => ({
+        street: a.street,
+        city: a.city,
+        state: a.state || "",
+        zipCode: a.zipCode || "",
+        country: a.country || "",
+        nota: a.nota || "",
+      })),
     });
     setIsViewMode(false);
     setOpenMenuId(null);
     setIsModalOpen(true);
   };
 
-  const handleDeleteClient = (client: any) => {
+  const handleDeleteClient = (client: ClientWithRelations) => {
     setClientToDelete(client);
     setOpenMenuId(null);
     setIsDeleteModalOpen(true);
   };
 
-  const handleRestoreClient = async (client: any) => {
+  const handleRestoreClient = async (client: ClientWithRelations) => {
     setOpenMenuId(null);
     try {
       await clientService.restore(client.id);
@@ -209,11 +241,17 @@ export default function ClientsPage() {
         <DataTable
           title="GESTIÓN DE CLIENTES"
           subtitle="Administración de clientes y sus datos de contacto"
+          onRowClick={(client: ClientWithRelations) => {
+            if (window.innerWidth < 640) {
+              setMenuPosition(getCenteredMenuPosition());
+              setOpenMenuId(client.id);
+            }
+          }}
           columns={[
             {
               key: "client",
               label: "CLIENTE",
-              render: (client: any) => {
+              render: (client: ClientWithRelations) => {
                 const initials = client.name
                   .split(" ")
                   .map((n: string) => n[0])
@@ -249,7 +287,7 @@ export default function ClientsPage() {
             {
               key: "phones",
               label: "TELÉFONOS",
-              render: (client: any) => {
+              render: (client: ClientWithRelations) => {
                 const phoneCount = client.phones?.length || 0;
                 return (
                   <div>
@@ -262,7 +300,7 @@ export default function ClientsPage() {
             {
               key: "devices",
               label: "DISPOSITIVOS",
-              render: (client: any) => {
+              render: (client: ClientWithRelations) => {
                 const deviceCount = client.devices?.length || 0;
                 return (
                   <div>
@@ -275,7 +313,7 @@ export default function ClientsPage() {
             {
               key: "createdAt",
               label: "CREACIÓN",
-              render: (client: any) => (
+              render: (client: ClientWithRelations) => (
                 <p className="text-sm text-silver-400">
                   {new Date(client.createdAt).toLocaleDateString()}
                 </p>
@@ -284,7 +322,7 @@ export default function ClientsPage() {
             {
               key: "actions",
               label: "ACCIONES",
-              render: (client: any) => (
+              render: (client: ClientWithRelations) => (
                 <div className="relative">
                   <button
                     onClick={(e) => {
@@ -297,7 +335,7 @@ export default function ClientsPage() {
                         openMenuId === client.id ? null : client.id
                       );
                     }}
-                    className="p-2 hover:bg-mahogany_red/20 rounded-lg transition-colors border border-transparent hover:border-mahogany_red"
+                    className="p-2 hover:bg-mahogany_red/20 rounded-lg transition-colors border border-transparent hover:border-mahogany_red hidden sm:block"
                   >
                     <MoreVerticalIcon size={20} className="text-silver-400" />
                   </button>
@@ -367,7 +405,7 @@ export default function ClientsPage() {
             },
           ]}
           data={clients}
-          keyExtractor={(client: any) => client.id}
+          keyExtractor={(client: ClientWithRelations) => client.id}
           emptyMessage="No hay clientes registrados"
           loading={loading}
           searchPlaceholder="Buscar..."
