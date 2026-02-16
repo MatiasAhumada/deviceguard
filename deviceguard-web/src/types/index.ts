@@ -1,24 +1,40 @@
-import { Device, Admin, SuperAdmin, Client, Prisma, Phone, Address } from "@prisma/client";
+import {
+  Device as PrismaDevice,
+  Admin as PrismaAdmin,
+  SuperAdmin as PrismaSuperAdmin,
+  Client as PrismaClient,
+  Phone as PrismaPhone,
+  Address as PrismaAddress,
+} from "@prisma/client";
 
-export type { Device, Admin, SuperAdmin, Client };
-
-export type CreateDeviceDto = Prisma.DeviceCreateInput;
-export type UpdateDeviceDto = Prisma.DeviceUpdateInput;
-
-export type CreateClientDto = Prisma.ClientCreateInput & {
-  adminId?: string;
-  phones?: Prisma.PhoneCreateWithoutClientInput[];
-  addresses?: Prisma.AddressCreateWithoutClientInput[];
+export type {
+  PrismaDevice,
+  PrismaAdmin,
+  PrismaSuperAdmin,
+  PrismaClient,
+  PrismaPhone,
+  PrismaAddress,
 };
 
-export type UpdateClientDto = Prisma.ClientUpdateInput & {
-  adminId?: string;
-  phones?: Prisma.PhoneCreateWithoutClientInput[];
-  addresses?: Prisma.AddressCreateWithoutClientInput[];
-};
+export interface IClient extends PrismaClient {
+  phones: PrismaPhone[];
+  addresses: PrismaAddress[];
+  devices: PrismaDevice[];
+}
 
-export type ClientWithRelations = Client & {
-  phones: Phone[];
-  addresses: Address[];
-  devices: Device[];
-};
+export interface IClientFormValues
+  extends Omit<PrismaClient, "id" | "createdAt" | "updatedAt" | "deletedAt" | "adminId"> {
+  phones?: Array<{
+    number: string;
+    type: "MOBILE" | "HOME" | "WORK";
+    referencia?: string;
+  }>;
+  addresses?: Array<{
+    street: string;
+    city: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+    nota?: string;
+  }>;
+}

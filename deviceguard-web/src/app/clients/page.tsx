@@ -7,9 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GenericModal } from "@/components/common/GenericModal";
-import { createClientSchema, CreateClientDto } from "@/schemas/client.schema";
+import { createClientSchema } from "@/schemas/client.schema";
 import { clientService } from "@/services/client.service";
-import { ClientWithRelations } from "@/types";
+import {
+  IClient,
+  IClientFormValues,
+  PrismaPhone,
+  PrismaAddress,
+} from "@/types";
 import {
   clientErrorHandler,
   clientSuccessHandler,
@@ -30,25 +35,23 @@ import { getCenteredMenuPosition } from "@/utils/menu.util";
 
 export default function ClientsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState<CreateClientDto>({
+  const [formData, setFormData] = useState<IClientFormValues>({
     name: "",
     email: "",
     phones: [],
     addresses: [],
   });
   const [errors, setErrors] = useState<any>({});
-  const [clients, setClients] = useState<ClientWithRelations[]>([]);
+  const [clients, setClients] = useState<IClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 300);
-  const [selectedClient, setSelectedClient] =
-    useState<ClientWithRelations | null>(null);
+  const [selectedClient, setSelectedClient] = useState<IClient | null>(null);
   const [isViewMode, setIsViewMode] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [clientToDelete, setClientToDelete] =
-    useState<ClientWithRelations | null>(null);
+  const [clientToDelete, setClientToDelete] = useState<IClient | null>(null);
 
   useEffect(() => {
     loadClients();
@@ -84,17 +87,17 @@ export default function ClientsPage() {
     setIsModalOpen(true);
   };
 
-  const handleViewClient = (client: ClientWithRelations) => {
+  const handleViewClient = (client: IClient) => {
     setSelectedClient(client);
     setFormData({
       name: client.name,
       email: client.email || "",
-      phones: client.phones.map((p) => ({
+      phones: client.phones.map((p: PrismaPhone) => ({
         number: p.number,
         type: p.type,
         referencia: p.referencia || "",
       })),
-      addresses: client.addresses.map((a) => ({
+      addresses: client.addresses.map((a: PrismaAddress) => ({
         street: a.street,
         city: a.city,
         state: a.state || "",
@@ -108,17 +111,17 @@ export default function ClientsPage() {
     setIsModalOpen(true);
   };
 
-  const handleEditClient = (client: ClientWithRelations) => {
+  const handleEditClient = (client: IClient) => {
     setSelectedClient(client);
     setFormData({
       name: client.name,
       email: client.email || "",
-      phones: client.phones.map((p) => ({
+      phones: client.phones.map((p: PrismaPhone) => ({
         number: p.number,
         type: p.type,
         referencia: p.referencia || "",
       })),
-      addresses: client.addresses.map((a) => ({
+      addresses: client.addresses.map((a: PrismaAddress) => ({
         street: a.street,
         city: a.city,
         state: a.state || "",
@@ -132,13 +135,13 @@ export default function ClientsPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteClient = (client: ClientWithRelations) => {
+  const handleDeleteClient = (client: IClient) => {
     setClientToDelete(client);
     setOpenMenuId(null);
     setIsDeleteModalOpen(true);
   };
 
-  const handleRestoreClient = async (client: ClientWithRelations) => {
+  const handleRestoreClient = async (client: IClient) => {
     setOpenMenuId(null);
     try {
       await clientService.restore(client.id);
@@ -241,7 +244,7 @@ export default function ClientsPage() {
         <DataTable
           title="GESTIÓN DE CLIENTES"
           subtitle="Administración de clientes y sus datos de contacto"
-          onRowClick={(client: ClientWithRelations) => {
+          onRowClick={(client: IClient) => {
             if (window.innerWidth < 640) {
               setMenuPosition(getCenteredMenuPosition());
               setOpenMenuId(client.id);
@@ -251,7 +254,7 @@ export default function ClientsPage() {
             {
               key: "client",
               label: "CLIENTE",
-              render: (client: ClientWithRelations) => {
+              render: (client: IClient) => {
                 const initials = client.name
                   .split(" ")
                   .map((n: string) => n[0])
@@ -287,7 +290,7 @@ export default function ClientsPage() {
             {
               key: "phones",
               label: "TELÉFONOS",
-              render: (client: ClientWithRelations) => {
+              render: (client: IClient) => {
                 const phoneCount = client.phones?.length || 0;
                 return (
                   <div>
@@ -300,7 +303,7 @@ export default function ClientsPage() {
             {
               key: "devices",
               label: "DISPOSITIVOS",
-              render: (client: ClientWithRelations) => {
+              render: (client: IClient) => {
                 const deviceCount = client.devices?.length || 0;
                 return (
                   <div>
@@ -313,7 +316,7 @@ export default function ClientsPage() {
             {
               key: "createdAt",
               label: "CREACIÓN",
-              render: (client: ClientWithRelations) => (
+              render: (client: IClient) => (
                 <p className="text-sm text-silver-400">
                   {new Date(client.createdAt).toLocaleDateString()}
                 </p>
@@ -322,7 +325,7 @@ export default function ClientsPage() {
             {
               key: "actions",
               label: "ACCIONES",
-              render: (client: ClientWithRelations) => (
+              render: (client: IClient) => (
                 <div className="relative">
                   <button
                     onClick={(e) => {
@@ -405,7 +408,7 @@ export default function ClientsPage() {
             },
           ]}
           data={clients}
-          keyExtractor={(client: ClientWithRelations) => client.id}
+          keyExtractor={(client: IClient) => client.id}
           emptyMessage="No hay clientes registrados"
           loading={loading}
           searchPlaceholder="Buscar..."
@@ -492,7 +495,7 @@ export default function ClientsPage() {
               <Input
                 id="email"
                 type="email"
-                value={formData.email}
+                value={formData.email || ""}
                 onChange={(e) => {
                   setFormData({ ...formData, email: e.target.value });
                   if (errors.email) setErrors({ ...errors, email: undefined });
