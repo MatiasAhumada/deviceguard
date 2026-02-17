@@ -10,6 +10,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\" --ignore-path .prettierignore",
     "postinstall": "prisma generate",
     "migrate": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
     "reset": "prisma migrate reset",
     "studio": "prisma studio"
   },

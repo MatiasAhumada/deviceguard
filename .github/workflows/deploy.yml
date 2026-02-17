@@ -22,10 +22,10 @@ jobs:
             cd deviceguard/deviceguard-web
             git fetch origin main
             git reset --hard origin/main
-            git clean -fd -e .next
+            git clean -fd -e .env -e storage
             corepack enable
             corepack prepare pnpm@latest --activate
             pnpm install
-            pnpm migrate
+            pnpm migrate:deploy
             pnpm build
             pm2 restart deviceguard-web || pm2 start "pnpm start" --name deviceguard-web
