@@ -4,10 +4,10 @@ import { DeviceStatus, DeviceType } from "@prisma/client";
 export const createDeviceSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   type: z.nativeEnum(DeviceType, { required_error: "El tipo es requerido" }),
-  model: z.string().optional().or(z.literal("")).default(""),
-  serialNumber: z.string().optional().or(z.literal("")).default(""),
+  model: z.string().optional(),
+  serialNumber: z.string().optional(),
   status: z.nativeEnum(DeviceStatus).default(DeviceStatus.ACTIVE),
-  clientId: z.string().nullable().default(null),
+  clientId: z.string().min(1, "El cliente es requerido"),
 });
 
 export const DEVICE_TYPE_LABELS: Record<DeviceType, string> = {

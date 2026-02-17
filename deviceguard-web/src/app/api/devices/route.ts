@@ -30,9 +30,13 @@ export async function POST(request: NextRequest) {
     const validatedData = createDeviceSchema.parse(body);
 
     const device = await devicesService.create({
-      ...validatedData,
+      name: validatedData.name,
+      type: validatedData.type,
+      model: validatedData.model || null,
+      serialNumber: validatedData.serialNumber || null,
+      status: validatedData.status,
       admin: { connect: { id: payload.adminId! } },
-      client: { connect: { id: body.clientId } },
+      client: { connect: { id: validatedData.clientId! } },
     });
 
     return NextResponse.json(device, { status: httpStatus.CREATED });
