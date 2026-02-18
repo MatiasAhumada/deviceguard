@@ -5,6 +5,10 @@ import {
   Client as PrismaClient,
   Phone as PrismaPhone,
   Address as PrismaAddress,
+  Sale as PrismaSale,
+  DeviceSync as PrismaDeviceSync,
+  Notification as PrismaNotification,
+  Installment as PrismaInstallment,
 } from "@prisma/client";
 
 export type {
@@ -14,6 +18,10 @@ export type {
   PrismaClient,
   PrismaPhone,
   PrismaAddress,
+  PrismaSale,
+  PrismaDeviceSync,
+  PrismaNotification,
+  PrismaInstallment,
 };
 
 export interface IClient extends PrismaClient {
@@ -50,3 +58,17 @@ export interface IDeviceFormValues extends Omit<
   PrismaDevice,
   "id" | "createdAt" | "updatedAt" | "deletedAt" | "adminId" | "clientId"
 > {}
+
+export interface ISale extends PrismaSale {
+  device: PrismaDevice;
+  client: PrismaClient;
+}
+
+export interface IDeviceSync extends PrismaDeviceSync {
+  device: PrismaDevice;
+}
+
+export interface INotification extends PrismaNotification {
+  device: PrismaDevice;
+  installment: PrismaInstallment;
+}

@@ -261,6 +261,14 @@ export default function DevicesPage() {
                     color: "text-green-500",
                     label: "Activo",
                   },
+                  [DeviceStatus.SOLD_PENDING]: {
+                    color: "text-yellow-500",
+                    label: "Vendido (Pendiente)",
+                  },
+                  [DeviceStatus.SOLD_SYNCED]: {
+                    color: "text-green-500",
+                    label: "Vendido (Sincronizado)",
+                  },
                   [DeviceStatus.INACTIVE]: {
                     color: "text-silver-400",
                     label: "Inactivo",

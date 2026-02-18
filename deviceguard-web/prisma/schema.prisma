@@ -14,9 +14,11 @@ enum UserRole {
 
 enum DeviceStatus {
   ACTIVE
-  INACTIVE
+  SOLD_PENDING
+  SOLD_SYNCED
   BLOCKED
   MAINTENANCE
+  INACTIVE
 }
 
 enum DeviceType {
@@ -39,6 +41,12 @@ enum PaymentMethod {
   TRANSFER
   CARD
   CHECK
+}
+
+enum NotificationType {
+  WARNING_1
+  WARNING_2
+  BLOCKED
 }
 
 enum PhoneType {
@@ -106,6 +114,7 @@ model Client {
   payments  Payment[]
   addresses Address[]
   phones    Phone[]
+  sales     Sale[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -159,11 +168,14 @@ model Device {
   adminId      String
   clientId     String?
 
-  admin        Admin         @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  client       Client?       @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  paymentPlan  PaymentPlan?
-  blockRule    BlockRule?
-  installments Installment[]
+  admin         Admin          @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  client        Client?        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  paymentPlan   PaymentPlan?
+  blockRule     BlockRule?
+  installments  Installment[]
+  sale          Sale?
+  sync          DeviceSync?
+  notifications Notification[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -199,8 +211,9 @@ model Installment {
   status     InstallmentStatus @default(PENDING)
   deviceId   String
 
-  device   Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  payments Payment[]
+  device        Device         @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  payments      Payment[]
+  notifications Notification[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -243,4 +256,53 @@ model Payment {
   deletedAt DateTime?
 
   @@map("payments")
+}
+
+model Sale {
+  id              String   @id @default(cuid())
+  deviceId        String   @unique
+  clientId        String
+  totalAmount     Decimal  @db.Decimal(10, 2)
+  installments    Int
+  monthlyAmount   Decimal  @db.Decimal(10, 2)
+  activationCode  String   @unique
+  saleDate        DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@map("sales")
+}
+
+model DeviceSync {
+  id       String   @id @default(cuid())
+  deviceId String   @unique
+  imei     String   @unique
+  syncedAt DateTime @default(now())
+  lastPing DateTime @default(now())
+
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("device_syncs")
+}
+
+model Notification {
+  id            String           @id @default(cuid())
+  deviceId      String
+  installmentId String
+  type          NotificationType
+  message       String
+  sentAt        DateTime         @default(now())
+
+  device      Device      @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  installment Installment @relation(fields: [installmentId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
 }
