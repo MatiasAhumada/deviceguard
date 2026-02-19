@@ -11,7 +11,8 @@ interface GenericModalProps {
   description?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl";
+  variant?: "default" | "dark";
 }
 
 const SIZE_CLASSES = {
@@ -19,6 +20,8 @@ const SIZE_CLASSES = {
   md: "max-w-md",
   lg: "max-w-lg",
   xl: "max-w-xl",
+  "2xl": "max-w-2xl",
+  "4xl": "max-w-4xl",
 };
 
 export function GenericModal({
@@ -29,7 +32,10 @@ export function GenericModal({
   children,
   footer,
   size = "md",
+  variant = "default",
 }: GenericModalProps) {
+  const isDark = variant === "dark";
+  
   return (
     <AnimatePresence>
       {open && (
@@ -49,11 +55,11 @@ export function GenericModal({
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
             <div
-              className={`bg-white border border-carbon_black-600 rounded-lg shadow-2xl ${SIZE_CLASSES[size]} w-full max-h-[90vh] overflow-y-auto pointer-events-auto`}
+              className={`${isDark ? "bg-onyx border-carbon_black-600" : "bg-white border-carbon_black-600"} rounded-lg shadow-2xl ${SIZE_CLASSES[size]} w-full max-h-[90vh] overflow-y-auto pointer-events-auto`}
             >
-              <div className="flex items-center justify-between p-6 border-b border-carbon_black-600">
+              <div className={`flex items-center justify-between p-6 border-b ${isDark ? "border-carbon_black-700 bg-carbon_black" : "border-carbon_black-600"}`}>
                 <div>
-                  <h2 className="text-lg font-semibold text-carbon_black">
+                  <h2 className={`text-lg font-semibold ${isDark ? "text-white" : "text-carbon_black"}`}>
                     {title}
                   </h2>
                   {description && (
@@ -66,14 +72,14 @@ export function GenericModal({
                   variant="ghost"
                   size="icon"
                   onClick={() => onOpenChange(false)}
-                  className="text-silver-400 hover:text-carbon_black hover:bg-silver-100"
+                  className={`${isDark ? "text-silver-400 hover:text-white hover:bg-carbon_black-700" : "text-silver-400 hover:text-carbon_black hover:bg-silver-100"}`}
                 >
                   <Cancel01Icon size={20} />
                 </Button>
               </div>
-              <div className="p-6">{children}</div>
+              <div className={`p-6 ${isDark ? "bg-onyx" : ""}`}>{children}</div>
               {footer && (
-                <div className="flex justify-end gap-2 p-6 border-t border-carbon_black-600">
+                <div className={`flex justify-end gap-2 p-6 border-t ${isDark ? "border-carbon_black-700 bg-carbon_black" : "border-carbon_black-600"}`}>
                   {footer}
                 </div>
               )}

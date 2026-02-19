@@ -26,4 +26,6 @@ export const API_ROUTES = {
   DEVICES: "/api/devices",
   USERS: "/api/users",
   REPORTS: "/api/reports",
+  FINANCING_PLANS: "/api/financing-plans",
+  SALES: "/api/sales",
 } as const;

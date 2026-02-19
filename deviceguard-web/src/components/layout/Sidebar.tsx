@@ -21,6 +21,7 @@ import {
   Menu01Icon,
   Cancel01Icon,
   SmartPhone02Icon,
+  ShoppingCart01Icon,
 } from "hugeicons-react";
 import { Smartphone } from "lucide-react";
 
@@ -32,6 +33,7 @@ const ICONS = {
   FileText: FileScriptIcon,
   Settings: Settings02Icon,
   Smartphone: SmartPhone02Icon,
+  Shopping: ShoppingCart01Icon,
 };
 
 export function Sidebar() {

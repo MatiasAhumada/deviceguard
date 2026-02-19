@@ -76,6 +76,12 @@ export const ROUTES_BY_ROLE = {
       icon: "Smartphone",
       module: MODULES.ORGANIZATIONS,
     },
+    {
+      path: "/sales",
+      label: "Ventas",
+      icon: "Shopping",
+      module: MODULES.ORGANIZATIONS,
+    },
   ],
 } as const;
 

@@ -9,6 +9,7 @@ import {
   DeviceSync as PrismaDeviceSync,
   Notification as PrismaNotification,
   Installment as PrismaInstallment,
+  FinancingPlan as PrismaFinancingPlan,
 } from "@prisma/client";
 
 export type {
@@ -22,6 +23,7 @@ export type {
   PrismaDeviceSync,
   PrismaNotification,
   PrismaInstallment,
+  PrismaFinancingPlan,
 };
 
 export interface IClient extends PrismaClient {
@@ -72,3 +74,5 @@ export interface INotification extends PrismaNotification {
   device: PrismaDevice;
   installment: PrismaInstallment;
 }
+
+export interface IFinancingPlan extends PrismaFinancingPlan {}
