@@ -23,7 +23,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.matias.deviceguard"
+      "package": "com.deviceguard.kiosk"
     },
     "web": {
       "bundler": "metro",

@@ -35,6 +35,7 @@ export default function RootLayout() {
 
   const enableStrictLock = () => {
     if (DeviceModule) {
+      DeviceModule.enableKioskRestrictions();
       DeviceModule.startKioskMode();
       DeviceModule.setStatusBarDisabled(true);
     }

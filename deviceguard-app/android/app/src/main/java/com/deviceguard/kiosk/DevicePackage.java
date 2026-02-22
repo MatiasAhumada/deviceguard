@@ -1,4 +1,4 @@
-package com.matias.deviceguard;
+package com.deviceguard.kiosk;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;

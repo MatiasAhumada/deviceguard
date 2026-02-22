@@ -1,4 +1,4 @@
-package com.matias.deviceguard
+package com.deviceguard.kiosk
 
 import android.app.Application
 import android.content.res.Configuration

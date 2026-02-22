@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.matias.deviceguard'
+    namespace 'com.deviceguard.kiosk'
     defaultConfig {
-        applicationId 'com.matias.deviceguard'
+        applicationId 'com.deviceguard.kiosk'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

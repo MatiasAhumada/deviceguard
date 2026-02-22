@@ -19,18 +19,25 @@
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
     <receiver
-        android:name="com.matias.deviceguard.DeviceAdmin"
+        android:name="com.deviceguard.kiosk.DeviceAdmin"
         android:label="DeviceGuard Admin"
         android:permission="android.permission.BIND_DEVICE_ADMIN"
-        android:exported="true">
+        android:exported="true"
+        android:directBootAware="true">
         <meta-data
             android:name="android.app.device_admin"
             android:resource="@xml/device_admin_rules" />
         <intent-filter>
             <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             <action android:name="android.intent.action.BOOT_COMPLETED" />
+            <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            <action android:name="android.intent.action.USER_PRESENT" />
         </intent-filter>
     </receiver>
+    <service
+        android:name=".ConnectivityWatchdog"
+        android:enabled="true"
+        android:exported="false" />
     <activity android:name=".MainActivity" 
         android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" 
         android:launchMode="singleTask" 

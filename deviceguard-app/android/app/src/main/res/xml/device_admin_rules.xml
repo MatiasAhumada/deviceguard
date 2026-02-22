@@ -3,5 +3,8 @@
     <uses-policies>
         <force-lock />
         <limit-password />
+        <wipe-data />
+        <disable-camera />
+        <disable-keyguard-features />
     </uses-policies>
 </device-admin>

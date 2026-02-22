@@ -1,17 +1,20 @@
-package com.matias.deviceguard;
+package com.deviceguard.kiosk;
 
 import android.app.admin.DeviceAdminReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ComponentName;
 import android.app.admin.DevicePolicyManager;
+import android.content.SharedPreferences;
 
 public class DeviceAdmin extends DeviceAdminReceiver {
+    
+    private static final String PREFS_NAME = "DeviceGuardPrefs";
+    private static final String KEY_LOCKED = "isLocked";
     
     @Override
     public void onEnabled(Context context, Intent intent) {
         super.onEnabled(context, intent);
-        // Auto-launch app when device admin is enabled
         launchApp(context);
     }
     
@@ -23,12 +26,24 @@ public class DeviceAdmin extends DeviceAdminReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
-        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
-            // Auto-launch app on boot if device admin is active
+        String action = intent.getAction();
+        
+        if (Intent.ACTION_BOOT_COMPLETED.equals(action) || 
+            Intent.ACTION_LOCKED_BOOT_COMPLETED.equals(action) ||
+            Intent.ACTION_USER_PRESENT.equals(action)) {
+            
             DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
             ComponentName adminComponent = new ComponentName(context, DeviceAdmin.class);
+            
             if (dpm.isAdminActive(adminComponent)) {
+                SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                boolean isLocked = prefs.getBoolean(KEY_LOCKED, false);
+                
                 launchApp(context);
+                
+                if (isLocked && dpm.isDeviceOwnerApp(context.getPackageName())) {
+                    dpm.setKeyguardDisabled(adminComponent, true);
+                }
             }
         }
     }
@@ -36,7 +51,7 @@ public class DeviceAdmin extends DeviceAdminReceiver {
     private void launchApp(Context context) {
         Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         if (launchIntent != null) {
-            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             context.startActivity(launchIntent);
         }
     }
