@@ -1,8 +1,6 @@
 export const API_ENDPOINTS = {
   DEVICES: {
-    PROVISION: '/api/devices/provision',
-    STATUS: '/api/devices/status',
-    LOCK: '/api/devices/lock',
-    UNLOCK: '/api/devices/unlock',
+    SYNC: '/api/device-syncs',           // POST — vincula dispositivo con código de activación
+    SYNC_STATUS: '/api/device-syncs/status', // GET — consulta estado de vinculación (usado por la web)
   },
 } as const;

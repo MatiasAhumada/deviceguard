@@ -7,6 +7,7 @@ import { CodeInput } from "@/components/provisioning/CodeInput";
 import { NumericKeyboard } from "@/components/provisioning/NumericKeyboard";
 import { AlphanumericKeyboard } from "@/components/provisioning/AlphanumericKeyboard";
 import { useProvisioningCode } from "@/src/hooks/useProvisioningCode";
+import { useDeviceImei } from "@/src/hooks/useDeviceImei";
 import { provisioningService } from "@/src/services/provisioning.service";
 import { validateProvisioningCode } from "@/src/utils/validation.util";
 
@@ -15,21 +16,53 @@ const { height } = Dimensions.get("window");
 export default function ProvisioningScreen() {
   const router = useRouter();
   const { code, handleInput, handleDelete, getFullCode, isComplete } = useProvisioningCode();
+  const { deviceId, isReady: isDeviceReady } = useDeviceImei();
   const [showLetters, setShowLetters] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // El botón está habilitado solo cuando el código está completo Y el deviceId ya fue resuelto
+  const canVerify = isComplete() && isDeviceReady && !isLoading;
 
   const handleVerify = async () => {
-    // const fullCode = getFullCode();
+    const fullCode = getFullCode();
 
-    // if (!validateProvisioningCode(fullCode)) {
-    //   return;
-    // }
+    if (!validateProvisioningCode(fullCode)) {
+      setErrorMessage("El código debe ser de 6 caracteres alfanuméricos.");
+      return;
+    }
 
+    if (!deviceId) {
+      setErrorMessage("No se pudo identificar el dispositivo. Intenta reiniciar la app.");
+      return;
+    }
+
+    setErrorMessage(null);
     setIsLoading(true);
 
     try {
-      router.push("/linking");
-    } catch (error) {
+      const result = await provisioningService.syncDevice(fullCode, deviceId);
+
+      // Navega a la pantalla de animación de vinculación pasando los datos
+      // reales del dispositivo para que linking-success.tsx los muestre
+      router.push({
+        pathname: "/linking",
+        params: {
+          deviceName: result.deviceName,
+          deviceId: result.deviceId,
+          adminName: result.adminName,
+        },
+      });
+    } catch (error: any) {
+      const serverMessage =
+        error?.response?.data?.message ||
+        "No se pudo completar la vinculación. Verifica el código e inténtalo de nuevo.";
+
+      router.push({
+        pathname: "/linking-error",
+        params: { message: serverMessage },
+      });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -42,6 +75,15 @@ export default function ProvisioningScreen() {
 
           <CodeInput code={code} />
 
+          {/* Mensaje de error inline (validación local) */}
+          {errorMessage && (
+            <YStack backgroundColor="#450A0A" borderRadius={8} paddingHorizontal="$4" paddingVertical="$3">
+              <Text color="#FCA5A5" fontSize={13} textAlign="center">
+                {errorMessage}
+              </Text>
+            </YStack>
+          )}
+
           <Button
             backgroundColor="#DC2626"
             borderRadius={10}
@@ -49,19 +91,31 @@ export default function ProvisioningScreen() {
             marginTop="$8"
             alignSelf="center"
             onPress={handleVerify}
-            disabled={!isComplete() || isLoading}
-            opacity={!isComplete() || isLoading ? 0.5 : 1}
+            disabled={!canVerify}
+            opacity={!canVerify ? 0.5 : 1}
             pressStyle={{ opacity: 0.8 }}
           >
             <Text color="white" fontSize={18} fontWeight="800">
-              {isLoading ? "Verificando..." : "Verificar y Vincular"}
+              {isLoading
+                ? "Vinculando..."
+                : !isDeviceReady
+                ? "Preparando dispositivo..."
+                : "Verificar y Vincular"}
             </Text>
           </Button>
 
           {showLetters ? (
-            <AlphanumericKeyboard onInput={handleInput} onDelete={handleDelete} onToggleNumbers={() => setShowLetters(false)} />
+            <AlphanumericKeyboard
+              onInput={handleInput}
+              onDelete={handleDelete}
+              onToggleNumbers={() => setShowLetters(false)}
+            />
           ) : (
-            <NumericKeyboard onInput={handleInput} onDelete={handleDelete} onToggleLetters={() => setShowLetters(true)} />
+            <NumericKeyboard
+              onInput={handleInput}
+              onDelete={handleDelete}
+              onToggleLetters={() => setShowLetters(true)}
+            />
           )}
         </YStack>
       </ScrollView>

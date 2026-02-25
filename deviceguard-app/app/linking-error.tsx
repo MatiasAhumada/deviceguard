@@ -1,11 +1,14 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { YStack, Text, Button } from "tamagui";
 
 export default function LinkingErrorScreen() {
   const router = useRouter();
+  // Recibe el mensaje de error enviado desde provisioning.tsx
+  const { message } = useLocalSearchParams<{ message?: string }>();
 
   const handleRetry = () => {
-    router.replace("/device-blocked");
+    // Vuelve a la pantalla de ingreso de código para reintentar
+    router.replace("/provisioning");
   };
 
   return (
@@ -55,8 +58,8 @@ export default function LinkingErrorScreen() {
             textAlign="center"
             maxWidth={320}
           >
-            Hubo un problema al intentar vincular este dispositivo. Revisa tu
-            conexión o el código de activación e inténtalo nuevamente.
+            {message ||
+              "Hubo un problema al intentar vincular este dispositivo. Revisa tu conexión o el código de activación e inténtalo nuevamente."}
           </Text>
         </YStack>
       </YStack>
@@ -92,4 +95,3 @@ export default function LinkingErrorScreen() {
     </YStack>
   );
 }
-

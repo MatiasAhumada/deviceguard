@@ -115,7 +115,14 @@ export function useDeviceImei() {
 
 ---
 
-### FASE 2 — App: Conectar `provisioning.tsx` con la API real
+### ✅ FASE 2 — App: Conectar `provisioning.tsx` con la API real *(COMPLETADA)*
+
+**Archivos modificados:**
+- `deviceguard-app/src/constants/api.constant.ts` ✅
+- `deviceguard-app/src/services/provisioning.service.ts` ✅
+- `deviceguard-app/app/provisioning.tsx` ✅
+- `deviceguard-app/app/linking-error.tsx` ✅ *(fix bonus: mensaje dinámico + retry a /provisioning)*
+
 
 **Archivos a modificar:**
 - `deviceguard-app/src/services/provisioning.service.ts`
