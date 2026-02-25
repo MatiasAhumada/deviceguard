@@ -17,7 +17,7 @@ async function main() {
     },
   });
 
-  await prisma.superAdmin.upsert({
+  const superAdmin = await prisma.superAdmin.upsert({
     where: { userId: superAdminUser.id },
     update: {},
     create: {
@@ -25,9 +25,35 @@ async function main() {
     },
   });
 
+  // ========== ADMIN VINCULADO ==========
+  const adminUser = await prisma.user.upsert({
+    where: { email: "admin@deviceguard.com" },
+    update: {},
+    create: {
+      name: "Organización Admin",
+      email: "admin@deviceguard.com",
+      password: hashedPassword, // Usamos la misma clave "admin123" para simplificar
+      role: UserRole.ADMIN,
+    },
+  });
+
+  await prisma.admin.upsert({
+    where: { userId: adminUser.id },
+    update: {},
+    create: {
+      userId: adminUser.id,
+      superAdminId: superAdmin.id, // Relación clave
+    },
+  });
+
   console.log("Seed completed successfully");
-  console.log("Super Admin created:");
+  console.log("----------------------------");
+  console.log("Super Admin creado:");
   console.log("Email: superadmin@deviceguard.com");
+  console.log("Password: admin123");
+  console.log("----------------------------");
+  console.log("Admin (Organización) creado:");
+  console.log("Email: admin@deviceguard.com");
   console.log("Password: admin123");
 }
 
