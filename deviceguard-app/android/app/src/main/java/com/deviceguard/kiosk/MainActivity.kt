@@ -25,6 +25,21 @@ class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     SplashScreenManager.registerOnActivity(this)
     super.onCreate(null)
+    
+    // 🛡️ REFUERZO: Asegurarnos de que el bloqueo de Reseteo de Fábrica
+    // se aplique incondicionalmente cada vez que la app está abierta, 
+    // por si el perfil de Device Owner se re-asignó sin pasar por onEnabled().
+    try {
+        val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
+        val adminComponent = android.content.ComponentName(this, DeviceAdmin::class.java)
+        if (dpm.isDeviceOwnerApp(packageName)) {
+            dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_FACTORY_RESET)
+            dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_SAFE_BOOT)
+            android.util.Log.i("MainActivity", "Factory Reset restrictions strictly enforced on launch.")
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("MainActivity", "Failed to force restrictions", e)
+    }
   }
 
   override fun getMainComponentName(): String = "main"

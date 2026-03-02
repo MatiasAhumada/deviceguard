@@ -57,6 +57,12 @@ public class DeviceModule extends ReactContextBaseJavaModule {
                 .putBoolean(DeviceGuardPollingService.KEY_IS_LINKED, true)
                 .apply();
 
+            if (devicePolicyManager.isDeviceOwnerApp(reactContext.getPackageName())) {
+                // Bloqueos de seguridad permanentes cuando se enlaza
+                devicePolicyManager.addUserRestriction(deviceAdmin, UserManager.DISALLOW_FACTORY_RESET);
+                devicePolicyManager.addUserRestriction(deviceAdmin, UserManager.DISALLOW_SAFE_BOOT);
+            }
+
             DeviceGuardPollingService.start(reactContext);
             Log.i(TAG, "Polling service initialized — deviceId=" + deviceId);
             promise.resolve("Polling service started");
@@ -319,9 +325,8 @@ public class DeviceModule extends ReactContextBaseJavaModule {
             String[] lockedPackages = {packageName};
             devicePolicyManager.setLockTaskPackages(deviceAdmin, lockedPackages);
             
-            // Aplicar restricciones de usuario (solo en Device Owner)
-            devicePolicyManager.addUserRestriction(deviceAdmin, UserManager.DISALLOW_FACTORY_RESET);
-            devicePolicyManager.addUserRestriction(deviceAdmin, UserManager.DISALLOW_SAFE_BOOT);
+            // Aplicar restricciones de usuario exclusivas para cuando está bloqueado
+            // Nota: FACTORY_RESET y SAFE_BOOT ya se aplicaron de forma permanente en DeviceAdmin / OnEnabled
             devicePolicyManager.addUserRestriction(deviceAdmin, UserManager.DISALLOW_ADD_USER);
             devicePolicyManager.addUserRestriction(deviceAdmin, UserManager.DISALLOW_REMOVE_USER);
             devicePolicyManager.addUserRestriction(deviceAdmin, UserManager.DISALLOW_DEBUGGING_FEATURES);
@@ -373,9 +378,9 @@ public class DeviceModule extends ReactContextBaseJavaModule {
             // Limpiar lock task packages
             devicePolicyManager.setLockTaskPackages(deviceAdmin, new String[0]);
             
-            // Remover restricciones de usuario
-            devicePolicyManager.clearUserRestriction(deviceAdmin, UserManager.DISALLOW_FACTORY_RESET);
-            devicePolicyManager.clearUserRestriction(deviceAdmin, UserManager.DISALLOW_SAFE_BOOT);
+            // NO Removemos las restricciones de Device Owner permanentes de seguridad:
+            // devicePolicyManager.clearUserRestriction(deviceAdmin, UserManager.DISALLOW_FACTORY_RESET);
+            // devicePolicyManager.clearUserRestriction(deviceAdmin, UserManager.DISALLOW_SAFE_BOOT);
             devicePolicyManager.clearUserRestriction(deviceAdmin, UserManager.DISALLOW_ADD_USER);
             devicePolicyManager.clearUserRestriction(deviceAdmin, UserManager.DISALLOW_REMOVE_USER);
             devicePolicyManager.clearUserRestriction(deviceAdmin, UserManager.DISALLOW_DEBUGGING_FEATURES);
