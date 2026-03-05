@@ -2,6 +2,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { IDevice, IClient } from "@/types";
 import { SALES_MESSAGES } from "@/constants/sales.constant";
+import { SearchableSelect } from "@/components/sales/SearchableSelect";
+import { DEVICE_TYPE_LABELS } from "@/schemas/device.schema";
 
 interface DeviceSelectionStepProps {
   devices: IDevice[];
@@ -12,6 +14,8 @@ interface DeviceSelectionStepProps {
   onDeviceChange: (deviceId: string) => void;
   onClientChange: (clientId: string) => void;
   onAmountChange: (amount: string) => void;
+  onCreateDevice: () => void;
+  onCreateClient: () => void;
 }
 
 export function DeviceSelectionStep({
@@ -23,45 +27,47 @@ export function DeviceSelectionStep({
   onDeviceChange,
   onClientChange,
   onAmountChange,
+  onCreateDevice,
+  onCreateClient,
 }: DeviceSelectionStepProps) {
+  const deviceOptions = devices.map((device) => ({
+    id: device.id,
+    label: device.name,
+    sublabel: `${DEVICE_TYPE_LABELS[device.type]} - ${device.model || "Sin modelo"}`,
+  }));
+
+  const clientOptions = clients.map((client) => ({
+    id: client.id,
+    label: client.name,
+    sublabel: client.email || "Sin email",
+  }));
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="device" className="text-white">
           {SALES_MESSAGES.STEPS.DEVICE}
         </Label>
-        <select
-          id="device"
+        <SearchableSelect
           value={selectedDevice}
-          onChange={(e) => onDeviceChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-md border border-carbon_black-600 bg-carbon_black text-white text-sm"
-        >
-          <option value="">{SALES_MESSAGES.PLACEHOLDERS.SELECT_DEVICE}</option>
-          {devices.map((device) => (
-            <option key={device.id} value={device.id}>
-              {device.name} - {device.model || "Sin modelo"}
-            </option>
-          ))}
-        </select>
+          onChange={onDeviceChange}
+          options={deviceOptions}
+          placeholder={SALES_MESSAGES.PLACEHOLDERS.SELECT_DEVICE}
+          onCreateNew={onCreateDevice}
+        />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="client" className="text-white">
           CLIENTE
         </Label>
-        <select
-          id="client"
+        <SearchableSelect
           value={selectedClient}
-          onChange={(e) => onClientChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-md border border-carbon_black-600 bg-carbon_black text-white text-sm"
-        >
-          <option value="">{SALES_MESSAGES.PLACEHOLDERS.SELECT_CLIENT}</option>
-          {clients.map((client) => (
-            <option key={client.id} value={client.id}>
-              {client.name}
-            </option>
-          ))}
-        </select>
+          onChange={onClientChange}
+          options={clientOptions}
+          placeholder={SALES_MESSAGES.PLACEHOLDERS.SELECT_CLIENT}
+          onCreateNew={onCreateClient}
+        />
       </div>
 
       <div className="space-y-2">

@@ -10,7 +10,9 @@ interface ActivationSuccessViewProps {
  * Vista de éxito mostrada cuando el dispositivo se vinculó correctamente.
  * SRP: solo renderiza — sin lógica asincrónica ni estado propio.
  */
-export function ActivationSuccessView({ deviceName }: ActivationSuccessViewProps) {
+export function ActivationSuccessView({
+  deviceName,
+}: ActivationSuccessViewProps) {
   return (
     <div className="space-y-6">
       {/* Icono de éxito con anillo pulsante */}
@@ -53,7 +55,8 @@ export function ActivationSuccessView({ deviceName }: ActivationSuccessViewProps
         <div className="border-t border-success/20 pt-3 flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
           <p className="text-xs text-success font-medium">
-            Monitoreo activo — el sistema verificará pagos según el plan configurado
+            Monitoreo activo — el sistema verificará pagos según el plan
+            configurado
           </p>
         </div>
       </div>

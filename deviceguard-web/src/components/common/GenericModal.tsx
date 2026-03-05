@@ -35,7 +35,7 @@ export function GenericModal({
   variant = "default",
 }: GenericModalProps) {
   const isDark = variant === "dark";
-  
+
   return (
     <AnimatePresence>
       {open && (
@@ -57,9 +57,13 @@ export function GenericModal({
             <div
               className={`${isDark ? "bg-onyx border-carbon_black-600" : "bg-white border-carbon_black-600"} rounded-lg shadow-2xl ${SIZE_CLASSES[size]} w-full max-h-[90vh] overflow-y-auto pointer-events-auto`}
             >
-              <div className={`flex items-center justify-between p-6 border-b ${isDark ? "border-carbon_black-700 bg-carbon_black" : "border-carbon_black-600"}`}>
+              <div
+                className={`flex items-center justify-between p-6 border-b ${isDark ? "border-carbon_black-700 bg-carbon_black" : "border-carbon_black-600"}`}
+              >
                 <div>
-                  <h2 className={`text-lg font-semibold ${isDark ? "text-white" : "text-carbon_black"}`}>
+                  <h2
+                    className={`text-lg font-semibold ${isDark ? "text-white" : "text-carbon_black"}`}
+                  >
                     {title}
                   </h2>
                   {description && (
@@ -79,7 +83,9 @@ export function GenericModal({
               </div>
               <div className={`p-6 ${isDark ? "bg-onyx" : ""}`}>{children}</div>
               {footer && (
-                <div className={`flex justify-end gap-2 p-6 border-t ${isDark ? "border-carbon_black-700 bg-carbon_black" : "border-carbon_black-600"}`}>
+                <div
+                  className={`flex justify-end gap-2 p-6 border-t ${isDark ? "border-carbon_black-700 bg-carbon_black" : "border-carbon_black-600"}`}
+                >
                   {footer}
                 </div>
               )}

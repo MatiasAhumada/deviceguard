@@ -18,4 +18,13 @@ export const DEVICE_TYPE_LABELS: Record<DeviceType, string> = {
   [DeviceType.OTHER]: "Otro",
 };
 
+export const DEVICE_STATUS_LABELS: Record<DeviceStatus, string> = {
+  [DeviceStatus.ACTIVE]: "Activo",
+  [DeviceStatus.SOLD_PENDING]: "Vendido (Pendiente)",
+  [DeviceStatus.SOLD_SYNCED]: "Vendido (Sincronizado)",
+  [DeviceStatus.INACTIVE]: "Inactivo",
+  [DeviceStatus.MAINTENANCE]: "Mantenimiento",
+  [DeviceStatus.BLOCKED]: "Bloqueado",
+};
+
 export type CreateDeviceDto = z.infer<typeof createDeviceSchema>;

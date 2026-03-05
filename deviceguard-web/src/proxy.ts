@@ -18,7 +18,6 @@ export default function proxy(request: NextRequest) {
 
   try {
     jwtUtils.verify(token);
-
     return NextResponse.next();
   } catch {
     const response = NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));

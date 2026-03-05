@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { financingPlanService } from "@/services/financingPlan.service";
+import { deviceService } from "@/services/device.service";
+import { clientService } from "@/services/client.service";
 import { IDevice, IClient, IFinancingPlan, ISale } from "@/types";
 import { SALES_MESSAGES } from "@/constants/sales.constant";
 import { PAYMENT_FREQUENCY_LABELS } from "@/constants/paymentFrequency.constant";
@@ -13,6 +15,8 @@ import { financingUtils } from "@/utils/financing.util";
 import { salesUtils } from "@/utils/sales.util";
 import { ShoppingCart01Icon } from "hugeicons-react";
 import { CreateFinancingPlanModal } from "@/components/sales/CreateFinancingPlanModal";
+import { CreateDeviceModal } from "@/components/sales/CreateDeviceModal";
+import { CreateClientModal } from "@/components/sales/CreateClientModal";
 import { StepIndicator } from "@/components/sales/StepIndicator";
 import { DeviceSelectionStep } from "@/components/sales/DeviceSelectionStep";
 import { FinancingPlanCard } from "@/components/sales/FinancingPlanCard";
@@ -42,6 +46,25 @@ export function SaleModal({
   initialSale,
 }: SaleModalProps) {
   const [isCreatePlanModalOpen, setIsCreatePlanModalOpen] = useState(false);
+  const [isCreateDeviceModalOpen, setIsCreateDeviceModalOpen] = useState(false);
+  const [isCreateClientModalOpen, setIsCreateClientModalOpen] = useState(false);
+  const [localDevices, setLocalDevices] = useState<IDevice[]>([]);
+  const [localClients, setLocalClients] = useState<IClient[]>([]);
+
+  useState(() => {
+    setLocalDevices(devices);
+    setLocalClients(clients);
+  });
+
+  const handleDeviceCreated = async () => {
+    const updatedDevices = await deviceService.getAll();
+    setLocalDevices(updatedDevices);
+  };
+
+  const handleClientCreated = async () => {
+    const updatedClients = await clientService.getAll();
+    setLocalClients(updatedClients);
+  };
 
   const {
     step,
@@ -99,10 +122,18 @@ export function SaleModal({
     if (step === 1) {
       return (
         <>
-          <Button variant="outline" onClick={handleClose} className="border-carbon_black-600 text-white hover:bg-carbon_black-700">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            className="border-carbon_black-600 text-white hover:bg-carbon_black-700"
+          >
             {SALES_MESSAGES.BUTTONS.CANCEL}
           </Button>
-          <Button className="bg-mahogany_red hover:bg-mahogany_red-600 text-white" onClick={handleNext} disabled={!canProceedStep1}>
+          <Button
+            className="bg-mahogany_red hover:bg-mahogany_red-600 text-white"
+            onClick={handleNext}
+            disabled={!canProceedStep1}
+          >
             {SALES_MESSAGES.BUTTONS.NEXT}
           </Button>
         </>
@@ -112,21 +143,39 @@ export function SaleModal({
     if (step === 2) {
       return (
         <>
-          <Button variant="outline" onClick={handleBack} className="border-carbon_black-600 text-white hover:bg-carbon_black-700">
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            className="border-carbon_black-600 text-white hover:bg-carbon_black-700"
+          >
             {SALES_MESSAGES.BUTTONS.BACK}
           </Button>
-          <Button variant="outline" onClick={handleClose} className="border-carbon_black-600 text-white hover:bg-carbon_black-700">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            className="border-carbon_black-600 text-white hover:bg-carbon_black-700"
+          >
             {SALES_MESSAGES.BUTTONS.CANCEL}
           </Button>
-          <Button className="bg-mahogany_red hover:bg-mahogany_red-600 text-white" onClick={handleSubmit} disabled={!canProceedStep2}>
-            {loading ? SALES_MESSAGES.BUTTONS.PROCESSING : SALES_MESSAGES.BUTTONS.REGISTER}
+          <Button
+            className="bg-mahogany_red hover:bg-mahogany_red-600 text-white"
+            onClick={handleSubmit}
+            disabled={!canProceedStep2}
+          >
+            {loading
+              ? SALES_MESSAGES.BUTTONS.PROCESSING
+              : SALES_MESSAGES.BUTTONS.REGISTER}
           </Button>
         </>
       );
     }
 
     return (
-      <Button variant="outline" onClick={handleClose} className="border-carbon_black-600 text-white hover:bg-carbon_black-700">
+      <Button
+        variant="outline"
+        onClick={handleClose}
+        className="border-carbon_black-600 text-white hover:bg-carbon_black-700"
+      >
         {SALES_MESSAGES.BUTTONS.CLOSE}
       </Button>
     );
@@ -144,19 +193,25 @@ export function SaleModal({
     >
       <StepIndicator
         currentStep={step}
-        steps={[SALES_MESSAGES.STEPS.DEVICE, SALES_MESSAGES.STEPS.FINANCING, SALES_MESSAGES.STEPS.LINKING]}
+        steps={[
+          SALES_MESSAGES.STEPS.DEVICE,
+          SALES_MESSAGES.STEPS.FINANCING,
+          SALES_MESSAGES.STEPS.LINKING,
+        ]}
       />
 
       {step === 1 && (
         <DeviceSelectionStep
-          devices={devices}
-          clients={clients}
+          devices={localDevices}
+          clients={localClients}
           selectedDevice={selectedDevice}
           selectedClient={selectedClient}
           amount={amount}
           onDeviceChange={setSelectedDevice}
           onClientChange={setSelectedClient}
           onAmountChange={setAmount}
+          onCreateDevice={() => setIsCreateDeviceModalOpen(true)}
+          onCreateClient={() => setIsCreateClientModalOpen(true)}
         />
       )}
 
@@ -164,17 +219,25 @@ export function SaleModal({
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="border border-mahogany_red rounded-lg p-6">
-              <Label className="text-silver-400 text-xs uppercase">{SALES_MESSAGES.LABELS.DEVICE_PRICE}</Label>
-              <p className="text-5xl font-bold text-white mt-2">{salesUtils.formatCurrency(amountValue)}</p>
+              <Label className="text-silver-400 text-xs uppercase">
+                {SALES_MESSAGES.LABELS.DEVICE_PRICE}
+              </Label>
+              <p className="text-5xl font-bold text-white mt-2">
+                {salesUtils.formatCurrency(amountValue)}
+              </p>
               <p className="text-xs text-silver-400 italic mt-2">
-                {devices.find((d) => d.id === selectedDevice)?.name || ""}
+                {localDevices.find((d) => d.id === selectedDevice)?.name || ""}
               </p>
             </div>
 
             <div className="border border-carbon_black-600 rounded-lg p-6 bg-carbon_black">
-              <Label className="text-silver-400 text-xs uppercase">{SALES_MESSAGES.LABELS.INITIAL_PAYMENT}</Label>
+              <Label className="text-silver-400 text-xs uppercase">
+                {SALES_MESSAGES.LABELS.INITIAL_PAYMENT}
+              </Label>
               <div className="relative mt-2">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-mahogany_red text-2xl">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-mahogany_red text-2xl">
+                  $
+                </span>
                 <Input
                   type="number"
                   value={initialPayment}
@@ -186,16 +249,24 @@ export function SaleModal({
             </div>
 
             <div className="border border-carbon_black-600 rounded-lg p-6 bg-carbon_black">
-              <Label className="text-silver-400 text-xs uppercase">{SALES_MESSAGES.LABELS.FINANCED_AMOUNT}</Label>
-              <p className="text-5xl font-bold text-white mt-2">{salesUtils.formatCurrency(financedAmount)}</p>
-              <p className="text-xs text-silver-400 mt-2">Precio - Entrega inicial</p>
+              <Label className="text-silver-400 text-xs uppercase">
+                {SALES_MESSAGES.LABELS.FINANCED_AMOUNT}
+              </Label>
+              <p className="text-5xl font-bold text-white mt-2">
+                {salesUtils.formatCurrency(financedAmount)}
+              </p>
+              <p className="text-xs text-silver-400 mt-2">
+                Precio - Entrega inicial
+              </p>
             </div>
 
             <div className="border border-carbon_black-600 rounded-lg p-4 bg-carbon_black">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <ShoppingCart01Icon size={20} className="text-mahogany_red" />
-                  <Label className="text-white uppercase">{SALES_MESSAGES.LABELS.FINANCING_PLAN}</Label>
+                  <Label className="text-white uppercase">
+                    {SALES_MESSAGES.LABELS.FINANCING_PLAN}
+                  </Label>
                 </div>
                 <Button
                   variant="outline"
@@ -221,26 +292,33 @@ export function SaleModal({
 
           <div className="space-y-4">
             <div className="border border-carbon_black-600 rounded-lg p-6 bg-carbon_black">
-              <Label className="text-silver-400 text-xs uppercase">{SALES_MESSAGES.LABELS.TOTAL_TO_PAY}</Label>
+              <Label className="text-silver-400 text-xs uppercase">
+                {SALES_MESSAGES.LABELS.TOTAL_TO_PAY}
+              </Label>
               <p className="text-5xl font-bold text-white mt-2">
-                {salesUtils.formatCurrency(totalWithInterest + initialPaymentValue)}
+                {salesUtils.formatCurrency(
+                  totalWithInterest + initialPaymentValue
+                )}
               </p>
-              <p className="text-sm text-mahogany_red mt-1">+{interestRate}% INTERÉS</p>
+              <p className="text-sm text-mahogany_red mt-1">
+                +{interestRate}% INTERÉS
+              </p>
             </div>
 
             <div className="border border-carbon_black-600 rounded-lg p-6 bg-carbon_black">
-              <Label className="text-silver-400 text-xs uppercase">{SALES_MESSAGES.LABELS.INSTALLMENT_PAYMENT}</Label>
-              <p className="text-3xl font-bold text-white mt-2">{salesUtils.formatCurrency(monthlyPayment)}</p>
-              <p className="text-xs text-silver-400 mt-1">
-                {selectedPlan?.installments || 0} cuotas {selectedPlan && PAYMENT_FREQUENCY_LABELS[selectedPlan.paymentFrequency].toLowerCase()}
+              <Label className="text-silver-400 text-xs uppercase">
+                {SALES_MESSAGES.LABELS.INSTALLMENT_PAYMENT}
+              </Label>
+              <p className="text-3xl font-bold text-white mt-2">
+                {salesUtils.formatCurrency(monthlyPayment)}
               </p>
-            </div>
-
-            <div className="border border-mahogany_red/50 rounded-lg p-4 bg-mahogany_red/5">
-              <div className="flex items-start gap-2">
-                <ShoppingCart01Icon size={20} className="text-mahogany_red mt-1" />
-                <p className="text-sm text-white">{SALES_MESSAGES.INFO.AUTO_BLOCK_WARNING}</p>
-              </div>
+              <p className="text-xs text-silver-400 mt-1">
+                {selectedPlan?.installments || 0} cuotas{" "}
+                {selectedPlan &&
+                  PAYMENT_FREQUENCY_LABELS[
+                    selectedPlan.paymentFrequency
+                  ].toLowerCase()}
+              </p>
             </div>
 
             <BlockRulesInput
@@ -264,6 +342,18 @@ export function SaleModal({
           const plansData = await financingPlanService.getAll();
           onPlansUpdate(plansData);
         }}
+      />
+
+      <CreateDeviceModal
+        open={isCreateDeviceModalOpen}
+        onOpenChange={setIsCreateDeviceModalOpen}
+        onSuccess={handleDeviceCreated}
+      />
+
+      <CreateClientModal
+        open={isCreateClientModalOpen}
+        onOpenChange={setIsCreateClientModalOpen}
+        onSuccess={handleClientCreated}
       />
     </GenericModal>
   );

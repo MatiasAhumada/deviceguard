@@ -594,7 +594,11 @@ export default function DevicesPage() {
         <GenericModal
           open={isBlockModalOpen}
           onOpenChange={setIsBlockModalOpen}
-          title={deviceToBlock?.status === DeviceStatus.BLOCKED ? "Desbloquear Dispositivo" : "Bloquear Dispositivo"}
+          title={
+            deviceToBlock?.status === DeviceStatus.BLOCKED
+              ? "Desbloquear Dispositivo"
+              : "Bloquear Dispositivo"
+          }
           description={
             deviceToBlock?.status === DeviceStatus.BLOCKED
               ? `¿Desbloquear ${deviceToBlock?.name}?`
@@ -609,10 +613,16 @@ export default function DevicesPage() {
                 Cancelar
               </Button>
               <Button
-                className={deviceToBlock?.status === DeviceStatus.BLOCKED ? "bg-green-600 hover:bg-green-700 text-white" : "bg-strawberry_red hover:bg-strawberry_red/90 text-white"}
+                className={
+                  deviceToBlock?.status === DeviceStatus.BLOCKED
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "bg-strawberry_red hover:bg-strawberry_red/90 text-white"
+                }
                 onClick={confirmToggleBlock}
               >
-                {deviceToBlock?.status === DeviceStatus.BLOCKED ? "Desbloquear" : "Bloquear"}
+                {deviceToBlock?.status === DeviceStatus.BLOCKED
+                  ? "Desbloquear"
+                  : "Bloquear"}
               </Button>
             </>
           }

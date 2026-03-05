@@ -64,7 +64,6 @@ export class DeviceActivationService {
     }
 
     return prisma.$transaction(async (tx) => {
-
       // 1. Actualizar el estado del dispositivo a SOLD_SYNCED
       await tx.device.update({
         where: { id: sale.deviceId },
@@ -169,4 +168,3 @@ export class DeviceActivationService {
 }
 
 export const deviceActivationService = new DeviceActivationService();
-

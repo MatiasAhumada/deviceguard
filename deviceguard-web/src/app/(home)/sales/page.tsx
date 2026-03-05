@@ -13,7 +13,12 @@ import {
   clientErrorHandler,
   clientSuccessHandler,
 } from "@/utils/handlers/clientError.handler";
-import { Download01Icon, MoreVerticalIcon, PencilEdit02Icon, Delete02Icon } from "hugeicons-react";
+import {
+  Download01Icon,
+  MoreVerticalIcon,
+  PencilEdit02Icon,
+  Delete02Icon,
+} from "hugeicons-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { SaleModal } from "@/components/sales/SaleModal";
 import { GenericModal } from "@/components/common/GenericModal";
@@ -45,12 +50,13 @@ export default function SalesPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [salesData, devicesData, clientsData, plansData] = await Promise.all([
-        saleService.getAll(),
-        deviceService.getAll(),
-        clientService.getAll(),
-        financingPlanService.getAll(),
-      ]);
+      const [salesData, devicesData, clientsData, plansData] =
+        await Promise.all([
+          saleService.getAll(),
+          deviceService.getAll(),
+          clientService.getAll(),
+          financingPlanService.getAll(),
+        ]);
       setSales(salesData);
       setDevices(devicesData);
       setClients(clientsData);
@@ -307,14 +313,20 @@ export default function SalesPage() {
                             onClick={() => handleEditSale(sale)}
                             className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-onyx-600 rounded-t-lg flex items-center gap-3 transition-colors"
                           >
-                            <PencilEdit02Icon size={16} className="text-silver-400" />
+                            <PencilEdit02Icon
+                              size={16}
+                              className="text-silver-400"
+                            />
                             Editar
                           </button>
                           <button
                             onClick={() => handleDeleteSale(sale)}
                             className="w-full text-left px-4 py-2.5 text-sm text-strawberry_red hover:bg-onyx-600 rounded-b-lg flex items-center gap-3 transition-colors"
                           >
-                            <Delete02Icon size={16} className="text-strawberry_red" />
+                            <Delete02Icon
+                              size={16}
+                              className="text-strawberry_red"
+                            />
                             Eliminar
                           </button>
                         </div>
@@ -430,7 +442,8 @@ export default function SalesPage() {
           }
         >
           <p className="text-sm text-silver-400">
-            Se eliminarán todos los datos asociados incluyendo plan de pagos, cuotas y reglas de bloqueo.
+            Se eliminarán todos los datos asociados incluyendo plan de pagos,
+            cuotas y reglas de bloqueo.
           </p>
         </GenericModal>
       </div>

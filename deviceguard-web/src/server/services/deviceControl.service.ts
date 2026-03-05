@@ -1,6 +1,6 @@
 /**
  * Servicio de Control de Dispositivos
- * 
+ *
  * Maneja operaciones remotas como bloqueo, desbloqueo, etc.
  * Integración con notificaciones push y WebSockets para comunicación en tiempo real
  */
@@ -69,7 +69,8 @@ export const deviceControlService = {
             deviceId: deviceId,
             installmentId: device.installments[0].id,
             type: NotificationType.BLOCKED,
-            message: reason || "El dispositivo ha sido bloqueado debido a impago",
+            message:
+              reason || "El dispositivo ha sido bloqueado debido a impago",
           },
         });
       }
@@ -77,7 +78,9 @@ export const deviceControlService = {
       // TODO: Enviar push notification al dispositivo
       // TODO: Usar Firebase Cloud Messaging o similar para notificar al móvil
 
-      console.log(`[DeviceControl] Dispositivo ${deviceId} bloqueado exitosamente`);
+      console.log(
+        `[DeviceControl] Dispositivo ${deviceId} bloqueado exitosamente`
+      );
 
       return {
         success: true,
@@ -86,7 +89,10 @@ export const deviceControlService = {
         status: updatedDevice.status,
       };
     } catch (error) {
-      console.error(`[DeviceControl] Error bloqueando dispositivo ${deviceId}:`, error);
+      console.error(
+        `[DeviceControl] Error bloqueando dispositivo ${deviceId}:`,
+        error
+      );
       throw error;
     }
   },
@@ -139,7 +145,9 @@ export const deviceControlService = {
 
       // TODO: Enviar push notification al dispositivo
 
-      console.log(`[DeviceControl] Dispositivo ${deviceId} desbloqueado exitosamente`);
+      console.log(
+        `[DeviceControl] Dispositivo ${deviceId} desbloqueado exitosamente`
+      );
 
       return {
         success: true,
@@ -148,7 +156,10 @@ export const deviceControlService = {
         status: updatedDevice.status,
       };
     } catch (error) {
-      console.error(`[DeviceControl] Error desbloqueando dispositivo ${deviceId}:`, error);
+      console.error(
+        `[DeviceControl] Error desbloqueando dispositivo ${deviceId}:`,
+        error
+      );
       throw error;
     }
   },
@@ -188,7 +199,10 @@ export const deviceControlService = {
         blockRule: device.blockRule,
       };
     } catch (error) {
-      console.error(`[DeviceControl] Error obteniendo estado de ${deviceId}:`, error);
+      console.error(
+        `[DeviceControl] Error obteniendo estado de ${deviceId}:`,
+        error
+      );
       throw error;
     }
   },
@@ -218,7 +232,10 @@ export const deviceControlService = {
 
       return blockedDevices;
     } catch (error) {
-      console.error("[DeviceControl] Error obteniendo dispositivos bloqueados:", error);
+      console.error(
+        "[DeviceControl] Error obteniendo dispositivos bloqueados:",
+        error
+      );
       throw error;
     }
   },

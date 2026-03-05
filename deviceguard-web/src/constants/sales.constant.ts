@@ -43,7 +43,8 @@ export const SALES_MESSAGES = {
     BLOCK_RULES_EXAMPLE:
       "Las reglas se calculan automáticamente según la frecuencia de pago. Semanal: días 5-6-7 | Quincenal: días 13-14-15 | Mensual: días 28-29-30 desde la fecha de venta.",
     SUCCESS_TITLE: "¡Venta Registrada Exitosamente!",
-    SUCCESS_SUBTITLE: "Ahora debe vincular el dispositivo con la aplicación móvil",
+    SUCCESS_SUBTITLE:
+      "Ahora debe vincular el dispositivo con la aplicación móvil",
     ACTIVATION_INSTRUCTIONS:
       "El cliente debe ingresar este código en la aplicación móvil DeviceGuard para vincular el dispositivo",
     CLIENT_INSTRUCTIONS_TITLE: "Instrucciones para el cliente:",

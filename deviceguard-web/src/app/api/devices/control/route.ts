@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/devices/control/lock
  * Bloquea un dispositivo de forma remota
- * 
+ *
  * Body:
  * {
  *   "deviceId": "device-id",

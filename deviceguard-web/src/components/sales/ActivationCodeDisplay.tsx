@@ -89,7 +89,10 @@ export function ActivationCodeDisplay({
       {/* Aviso importante */}
       <div className="border border-warning/50 rounded-lg p-4 bg-warning/5">
         <div className="flex items-start gap-2">
-          <ShoppingCart01Icon size={20} className="text-warning mt-1 flex-shrink-0" />
+          <ShoppingCart01Icon
+            size={20}
+            className="text-warning mt-1 flex-shrink-0"
+          />
           <div>
             <p className="text-sm text-white font-medium">
               {SALES_MESSAGES.INFO.IMPORTANT_TITLE}

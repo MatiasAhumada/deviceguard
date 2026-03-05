@@ -31,7 +31,11 @@ export class SaleRepository {
         ...(search && {
           OR: [
             { client: { name: { contains: search, mode: "insensitive" } } },
-            { device: { serialNumber: { contains: search, mode: "insensitive" } } },
+            {
+              device: {
+                serialNumber: { contains: search, mode: "insensitive" },
+              },
+            },
           ],
         }),
       },
@@ -93,7 +97,8 @@ export class SaleRepository {
           monthlyAmount: data.installmentAmount,
           startDate: new Date(),
           endDate: new Date(
-            Date.now() + data.installments * data.daysPerInstallment * 24 * 60 * 60 * 1000
+            Date.now() +
+              data.installments * data.daysPerInstallment * 24 * 60 * 60 * 1000
           ),
         },
       });
@@ -104,7 +109,9 @@ export class SaleRepository {
           deviceId: data.deviceId,
           number: i + 1,
           amount: data.installmentAmount,
-          dueDate: new Date(Date.now() + (i + 1) * data.daysPerInstallment * 24 * 60 * 60 * 1000),
+          dueDate: new Date(
+            Date.now() + (i + 1) * data.daysPerInstallment * 24 * 60 * 60 * 1000
+          ),
           status: "PENDING" as const,
         })
       );
@@ -133,22 +140,25 @@ export class SaleRepository {
     });
   }
 
-  async updateWithTransaction(id: string, data: {
-    deviceId: string;
-    clientId: string;
-    totalAmount: number;
-    initialPayment: number;
-    installments: number;
-    installmentAmount: number;
-    paymentFrequency: PaymentFrequency;
-    daysPerInstallment: number;
-    firstWarningDay: number;
-    secondWarningDay: number;
-    blockDay: number;
-  }) {
+  async updateWithTransaction(
+    id: string,
+    data: {
+      deviceId: string;
+      clientId: string;
+      totalAmount: number;
+      initialPayment: number;
+      installments: number;
+      installmentAmount: number;
+      paymentFrequency: PaymentFrequency;
+      daysPerInstallment: number;
+      firstWarningDay: number;
+      secondWarningDay: number;
+      blockDay: number;
+    }
+  ) {
     return prisma.$transaction(async (tx) => {
       const oldSale = await tx.sale.findUnique({ where: { id } });
-      
+
       if (oldSale && oldSale.deviceId !== data.deviceId) {
         await tx.device.update({
           where: { id: oldSale.deviceId },
@@ -183,19 +193,27 @@ export class SaleRepository {
           totalAmount: financedAmount,
           installments: data.installments,
           monthlyAmount: data.installmentAmount,
-          endDate: new Date(Date.now() + data.installments * data.daysPerInstallment * 24 * 60 * 60 * 1000),
+          endDate: new Date(
+            Date.now() +
+              data.installments * data.daysPerInstallment * 24 * 60 * 60 * 1000
+          ),
         },
       });
 
       await tx.installment.deleteMany({ where: { deviceId: data.deviceId } });
 
-      const installmentsData = Array.from({ length: data.installments }, (_, i) => ({
-        deviceId: data.deviceId,
-        number: i + 1,
-        amount: data.installmentAmount,
-        dueDate: new Date(Date.now() + (i + 1) * data.daysPerInstallment * 24 * 60 * 60 * 1000),
-        status: "PENDING" as const,
-      }));
+      const installmentsData = Array.from(
+        { length: data.installments },
+        (_, i) => ({
+          deviceId: data.deviceId,
+          number: i + 1,
+          amount: data.installmentAmount,
+          dueDate: new Date(
+            Date.now() + (i + 1) * data.daysPerInstallment * 24 * 60 * 60 * 1000
+          ),
+          status: "PENDING" as const,
+        })
+      );
 
       await tx.installment.createMany({ data: installmentsData });
 

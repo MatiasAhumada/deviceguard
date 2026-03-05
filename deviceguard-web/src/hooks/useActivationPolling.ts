@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import clientAxios from "@/utils/clientAxios.util";
 import { API_ROUTES } from "@/constants/routes";
 
-
 export type SyncStatus = "waiting" | "success";
 
 export interface ActivationPollResult {
@@ -35,7 +34,6 @@ export function useActivationPolling(
           synced: boolean;
           deviceName: string;
         }>(API_ROUTES.DEVICE_SYNCS.SYNC_STATUS(activationCode));
-
 
         if (data.synced) {
           setDeviceName(data.deviceName);

@@ -40,7 +40,9 @@ export class SaleService {
       });
     }
 
-    const plan = await this.financingPlanRepository.findById(data.financingPlanId);
+    const plan = await this.financingPlanRepository.findById(
+      data.financingPlanId
+    );
 
     if (!plan) {
       throw new ApiError({
@@ -50,7 +52,8 @@ export class SaleService {
     }
 
     const financedAmount = data.totalAmount - data.initialPayment;
-    const totalWithInterest = financedAmount * (1 + Number(plan.interestRate) / 100);
+    const totalWithInterest =
+      financedAmount * (1 + Number(plan.interestRate) / 100);
     const installmentAmount = totalWithInterest / data.installments;
     const activationCode = generateActivationCode();
     const daysPerInstallment = PAYMENT_FREQUENCY_DAYS[data.paymentFrequency];
@@ -103,7 +106,9 @@ export class SaleService {
       });
     }
 
-    const plan = await this.financingPlanRepository.findById(data.financingPlanId);
+    const plan = await this.financingPlanRepository.findById(
+      data.financingPlanId
+    );
 
     if (!plan) {
       throw new ApiError({
@@ -113,7 +118,8 @@ export class SaleService {
     }
 
     const financedAmount = data.totalAmount - data.initialPayment;
-    const totalWithInterest = financedAmount * (1 + Number(plan.interestRate) / 100);
+    const totalWithInterest =
+      financedAmount * (1 + Number(plan.interestRate) / 100);
     const installmentAmount = totalWithInterest / data.installments;
     const daysPerInstallment = PAYMENT_FREQUENCY_DAYS[data.paymentFrequency];
     const blockRules = BLOCK_RULES_BY_FREQUENCY[data.paymentFrequency];

@@ -24,7 +24,6 @@ import {
   ShoppingCart01Icon,
 } from "hugeicons-react";
 
-
 const ICONS = {
   LayoutDashboard: DashboardSpeed01Icon,
   Building2: Building03Icon,

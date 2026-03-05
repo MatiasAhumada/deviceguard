@@ -1,6 +1,6 @@
 /**
  * Componente: DeviceControlPanel
- * 
+ *
  * Panel de control para administradores
  * Permite bloquear/desbloquear dispositivos de forma remota
  * Está diseñado para usarse en el dashboard de ventas
@@ -43,9 +43,7 @@ export const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({
         `Bloqueo remoto: ${clientName} - ${new Date().toLocaleString()}`
       );
 
-      clientSuccessHandler(
-        `✅ ${deviceName} ha sido bloqueado correctamente`
-      );
+      clientSuccessHandler(`✅ ${deviceName} ha sido bloqueado correctamente`);
       setCurrentStatus(true);
       setShowConfirmDialog(false);
       onStatusChange?.(true);
@@ -119,9 +117,7 @@ export const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({
           {currentStatus && (
             <AlertCircle className="w-5 h-5 text-white animate-pulse" />
           )}
-          {!currentStatus && (
-            <CheckCircle className="w-5 h-5 text-white" />
-          )}
+          {!currentStatus && <CheckCircle className="w-5 h-5 text-white" />}
         </div>
       </div>
 
@@ -179,7 +175,9 @@ export const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-carbon_black border border-carbon_black-600 rounded-lg max-w-md w-full p-6 space-y-4">
             <h2 className="text-lg font-bold text-white">
-              {action === "lock" ? "⚠️ Confirmar Bloqueo" : "⚠️ Confirmar Desbloqueo"}
+              {action === "lock"
+                ? "⚠️ Confirmar Bloqueo"
+                : "⚠️ Confirmar Desbloqueo"}
             </h2>
 
             <p className="text-silver-300">
@@ -191,7 +189,8 @@ export const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({
             {action === "lock" && (
               <div className="bg-mahogany_red/20 border border-mahogany_red rounded p-3">
                 <p className="text-sm text-white">
-                  El dispositivo se bloqueará completamente. El cliente no podrá usar el dispositivo hasta que pague o desbloquees manualmente.
+                  El dispositivo se bloqueará completamente. El cliente no podrá
+                  usar el dispositivo hasta que pague o desbloquees manualmente.
                 </p>
               </div>
             )}

@@ -31,7 +31,8 @@ export function FinancingPlanCard({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-white font-medium text-lg">
-            {plan.installments} {PAYMENT_FREQUENCY_LABELS[plan.paymentFrequency]}
+            {plan.installments}{" "}
+            {PAYMENT_FREQUENCY_LABELS[plan.paymentFrequency]}
             {plan.installments === SALES_DEFAULTS.RECOMMENDED_INSTALLMENTS &&
               plan.paymentFrequency === "MONTHLY" &&
               " (Recomendado)"}

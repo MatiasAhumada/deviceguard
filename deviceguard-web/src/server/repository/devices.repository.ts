@@ -30,7 +30,6 @@ export class DevicesRepository {
     });
   }
 
-
   async findById(id: string) {
     return prisma.device.findUnique({
       where: { id },
