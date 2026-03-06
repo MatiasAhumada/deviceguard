@@ -233,10 +233,11 @@ function App() {
     };
 
     const adbPath = fs.existsSync(getAdbPath()) ? getAdbPath() : 'adb';
-    
-    // Comando para ver logs de DeviceGuard específicamente
-    const logcatCommand = `"${adbPath}" logcat -s DGPollingService:V PersistentService:V MainActivity:V DeviceAdmin:V BootReceiver:V *:E`;
-    
+
+    // Comando para ver solo logs de DeviceGuard (polling, bloqueo, desbloqueo)
+    // Usamos findstr para filtrar únicamente las etiquetas relevantes
+    const logcatCommand = `"${adbPath}" logcat | findstr "DGPollingService DeviceGuard"`;
+
     appendLog("📱 Iniciando visor de logs del dispositivo móvil...");
     appendLog(`Comando: ${logcatCommand}`);
     
@@ -394,7 +395,7 @@ function App() {
               <div className="log-info">
                 <span>Mostrando últimos {mobileLogs.length} logs</span>
                 <span className="log-filters">
-                  Filtros: DGPollingService | PersistentService | MainActivity | DeviceAdmin | BootReceiver
+                  Filtros: DGPollingService | DeviceGuard (POLLING, BLOQUEO, DESBLOQUEO)
                 </span>
               </div>
             </div>

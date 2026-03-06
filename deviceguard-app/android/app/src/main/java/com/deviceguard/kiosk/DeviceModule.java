@@ -15,24 +15,54 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Promise;
+import com.facebook.react.module.annotations.ReactModule;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 
+@ReactModule(name = DeviceModule.NAME)
 public class DeviceModule extends ReactContextBaseJavaModule {
-    
+
     private static final String TAG = "DeviceGuardModule";
+    public static final String NAME = "DeviceModule";
+    
+    // Evento para notificar cambios de estado a React Native
+    private static final String EVENT_DEVICE_STATE_CHANGED = "onDeviceStateChanged";
+    
     private DevicePolicyManager devicePolicyManager;
     private ComponentName deviceAdmin;
-    private ReactApplicationContext reactContext;
-    
+    private final ReactApplicationContext reactContext;
+
     public DeviceModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
         this.devicePolicyManager = (DevicePolicyManager) reactContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
         this.deviceAdmin = new ComponentName(reactContext, DeviceAdmin.class);
     }
-    
+
     @Override
     public String getName() {
-        return "DeviceModule";
+        return NAME;
+    }
+
+    /**
+     * Emite un evento a React Native cuando el estado del dispositivo cambia.
+     * @param context ReactApplicationContext (puede ser null si RN no está listo)
+     * @param blocked true si el dispositivo está bloqueado, false si está desbloqueado
+     */
+    public static void emitDeviceStateChanged(ReactApplicationContext context, boolean blocked) {
+        if (context == null) {
+            Log.d(TAG, "Cannot emit event - React Native not ready (context is null)");
+            return;
+        }
+
+        if (!context.hasActiveCatalystInstance()) {
+            Log.d(TAG, "Cannot emit event - React Native instance not active");
+            return;
+        }
+
+        // Enviar evento usando el mecanismo de React Native
+        context.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+            .emit(EVENT_DEVICE_STATE_CHANGED, blocked);
+        Log.d(TAG, "Emitted device state change: blocked=" + blocked);
     }
     
     @ReactMethod

@@ -65,10 +65,16 @@ class MainActivity : ReactActivity() {
     // 🛡️ ACTIVAR KIOSK MODE si el dispositivo está bloqueado
     val isLocked = prefs.getBoolean("isLocked", false)
     val isLinked = prefs.getBoolean("isLinked", false)
-    
-    if (isLinked && isLocked) {
+
+    // Verificar si venimos de un desbloqueo
+    val unlocked = intent?.getBooleanExtra("unlocked", false) ?: false
+    if (unlocked) {
+      android.util.Log.i("MainActivity", "Device unlocked from server - allowing normal navigation")
+    }
+
+    if (isLinked && isLocked && !unlocked) {
         DeviceAdmin.startKioskMode(this)
-        
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             try {
                 startLockTask()
@@ -86,6 +92,15 @@ class MainActivity : ReactActivity() {
     // Verificar si debemos activar kiosk mode al volver a la app
     val isLocked = prefs.getBoolean("isLocked", false)
     val isLinked = prefs.getBoolean("isLinked", false)
+
+    // Verificar si venimos de un desbloqueo (navegación desde el servicio)
+    val unlocked = intent?.getStringExtra("unlocked")?.toBoolean() ?: false
+    if (unlocked) {
+      // El servidor desbloqueó el dispositivo - NO activar kiosk mode
+      android.util.Log.i("MainActivity", "Device unlocked from server - allowing normal navigation")
+      intent.removeExtra("unlocked")
+      return
+    }
 
     if (isLinked && isLocked) {
         // Siempre activar kiosk mode cuando está bloqueado

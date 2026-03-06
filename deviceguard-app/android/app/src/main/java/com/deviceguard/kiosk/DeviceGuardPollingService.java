@@ -1,5 +1,6 @@
 package com.deviceguard.kiosk;
 
+import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -18,6 +19,10 @@ import android.os.Looper;
 import android.os.PowerManager;
 import android.util.Log;
 
+import com.facebook.react.ReactApplication;
+import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.bridge.ReactApplicationContext;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -26,20 +31,21 @@ import java.net.URL;
 /**
  * Foreground Service que mantiene el polling al servidor aunque la app esté
  * cerrada. Detecta cambios de estado (bloqueado/desbloqueado) y activa o
- * desactiva el modo kiosk sin necesidad de que el usuario abra la app.
- * 
- * ESTRATEGIA DE POLLING INTELIGENTE:
- * - Cuando NO está bloqueado: Polling cada 30 segundos para detectar bloqueo
- * - Cuando está BLOQUEADO: 
- *   • Polling NORMAL se DETIENE completamente (cero consultas al servidor)
- *   • Solo verificación LOCAL de SharedPreferences
- *   • Fallback MUY lento: consulta al servidor cada 5 minutos como último recurso
+ * desactiva modo kiosk sin necesidad de que el usuario abra la app.
+ *
+ * ESTRATEGIA DE POLLING CENTRALIZADO:
+ * - Polling cada 30 segundos (único punto de polling para toda la app)
+ * - Funciona con pantalla apagada, app en segundo plano, o en primer plano
+ * - Polling CONTINUO incluso cuando está bloqueado para detectar desbloqueo rápido
+ * - Cuando el servidor responde blocked=true: activa kiosk mode automáticamente
+ * - Cuando el servidor responde blocked=false: desactiva kiosk mode
  *
  * Ciclo de vida:
  *  - Arranca cuando la app termina la vinculación (llamado desde DeviceModule)
  *  - Arranca en BOOT_COMPLETED via DeviceAdmin si el dispositivo ya estaba vinculado
  *  - Se mantiene vivo con START_STICKY (Android lo reinicia si lo mata)
  *  - Usa AlarmManager para auto-reiniciarse en caso de ser detenido forzosamente
+ *  - Emite eventos a React Native cuando el estado cambia
  */
 public class DeviceGuardPollingService extends Service {
 
@@ -47,7 +53,7 @@ public class DeviceGuardPollingService extends Service {
     private static final String CHANNEL_ID = "deviceguard_polling";
     private static final int NOTIFICATION_ID = 1001;
     
-    // Polling cada 30 segundos cuando NO está bloqueado (suficiente para detección)
+    // Polling cada 30 segundos - único punto de polling para toda la app
     private static final long POLL_INTERVAL_NORMAL_MS = 30000;
     // Fallback de desbloqueo: cada 5 minutos verifica si el servidor desbloqueó
     // Esto es solo por si la app no puede recibir notificaciones push
@@ -72,7 +78,12 @@ public class DeviceGuardPollingService extends Service {
     private final Runnable pollRunnable = new Runnable() {
         @Override
         public void run() {
-            pollServer();
+            // Ejecutar polling en un hilo separado para evitar bloquear el hilo principal
+            new Thread(() -> {
+                pollServer();
+            }).start();
+            
+            // Programar siguiente ejecución
             handler.postDelayed(this, POLL_INTERVAL_NORMAL_MS);
         }
     };
@@ -88,6 +99,30 @@ public class DeviceGuardPollingService extends Service {
         alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         createNotificationChannel();
         sIsRunning = true;
+    }
+
+    /**
+     * Obtiene el ReactApplicationContext de forma segura.
+     * El contexto puede ser null si React Native no está inicializado.
+     */
+    private ReactApplicationContext getReactContext() {
+        try {
+            if (getApplication() instanceof ReactApplication) {
+                ReactContext context = ((ReactApplication) getApplication())
+                    .getReactNativeHost()
+                    .getReactInstanceManager()
+                    .getCurrentReactContext();
+                if (context instanceof ReactApplicationContext) {
+                    ReactApplicationContext reactApplicationContext = (ReactApplicationContext) context;
+                    if (reactApplicationContext.hasActiveCatalystInstance()) {
+                        return reactApplicationContext;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Error getting ReactContext: " + e.getMessage());
+        }
+        return null;
     }
 
     @Override
@@ -122,16 +157,8 @@ public class DeviceGuardPollingService extends Service {
         PersistentService.start(this);
         Log.i(TAG, "PersistentService guardian started");
 
-        // Iniciar el polling SOLO si no está bloqueado
-        if (!lastKnownBlocked) {
-            startPolling();
-        } else {
-            Log.i(TAG, "Device is LOCKED - stopping polling. Waiting for server unlock command.");
-            // Programar verificación LOCAL del estado (no polling al servidor)
-            scheduleLocalStateCheck();
-            // Programar fallback MUY lento (5 min)
-            scheduleUnlockFallback();
-        }
+        // Iniciar el polling SIEMPRE (incluso si está bloqueado, para detectar desbloqueo)
+        startPolling();
 
         Log.i(TAG, "Polling service started. lastKnownBlocked=" + lastKnownBlocked);
         
@@ -189,16 +216,7 @@ public class DeviceGuardPollingService extends Service {
     }
 
     private void pollServer() {
-        // Log para debuggear si el polling se está ejecutando cuando no debería
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        boolean isLocked = prefs.getBoolean(KEY_IS_LOCKED, false);
-        
-        if (isLocked) {
-            Log.e(TAG, "⚠️ POLLING EXECUTED WHILE LOCKED! This should not happen. Stopping immediately.");
-            stopPolling();
-            return;
-        }
-        
         String deviceId = prefs.getString(KEY_DEVICE_ID, null);
         String apiUrl = prefs.getString(KEY_API_URL, null);
 
@@ -207,19 +225,23 @@ public class DeviceGuardPollingService extends Service {
             return;
         }
 
-        Log.d(TAG, "Polling server for deviceId: " + deviceId);
+        Log.d(TAG, "Polling server for deviceId: " + deviceId + " at " + apiUrl);
 
         try {
             // GET /api/device-syncs/{deviceId}
             String endpoint = apiUrl + "/api/device-syncs/" + deviceId;
+            Log.d(TAG, "Poll endpoint: " + endpoint);
+            
             URL url = new URL(endpoint);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
-            conn.setConnectTimeout(4000);
-            conn.setReadTimeout(4000);
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
             conn.setRequestProperty("Accept", "application/json");
 
             int responseCode = conn.getResponseCode();
+            Log.d(TAG, "Poll response code: " + responseCode);
+            
             if (responseCode != 200) {
                 Log.w(TAG, "Poll returned HTTP " + responseCode);
                 conn.disconnect();
@@ -236,6 +258,8 @@ public class DeviceGuardPollingService extends Service {
             conn.disconnect();
 
             String body = sb.toString();
+            Log.d(TAG, "Poll response body: " + body);
+            
             // Parseo simple: buscar "blocked":true o "blocked":false
             boolean isBlocked = body.contains("\"blocked\":true");
 
@@ -249,10 +273,19 @@ public class DeviceGuardPollingService extends Service {
                 // Transición: bloqueado → libre
                 lastKnownBlocked = false;
                 onDeviceUnblocked();
+            } else if (isBlocked && lastKnownBlocked) {
+                // Ya está bloqueado, el servidor confirma que sigue bloqueado
+                Log.d(TAG, "Device still blocked - awaiting payment");
             }
 
+        } catch (java.net.UnknownHostException e) {
+            Log.e(TAG, "Poll failed: Unknown host - " + e.getMessage());
+        } catch (java.net.ConnectException e) {
+            Log.e(TAG, "Poll failed: Connection refused - " + e.getMessage());
+        } catch (java.net.SocketTimeoutException e) {
+            Log.e(TAG, "Poll failed: Connection timeout - " + e.getMessage());
         } catch (Exception e) {
-            Log.w(TAG, "Poll failed (network?): " + e.getMessage());
+            Log.e(TAG, "Poll failed: " + e.getClass().getSimpleName() + " - " + e.getMessage(), e);
         }
     }
 
@@ -262,7 +295,7 @@ public class DeviceGuardPollingService extends Service {
      */
     private void handleUnlockFallback() {
         Log.d(TAG, "Unlock fallback: checking if server unlocked device");
-        
+
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         String deviceId = prefs.getString(KEY_DEVICE_ID, null);
         String apiUrl = prefs.getString(KEY_API_URL, null);
@@ -274,14 +307,18 @@ public class DeviceGuardPollingService extends Service {
 
         try {
             String endpoint = apiUrl + "/api/device-syncs/" + deviceId;
+            Log.d(TAG, "Unlock fallback endpoint: " + endpoint);
+            
             URL url = new URL(endpoint);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
-            conn.setConnectTimeout(4000);
-            conn.setReadTimeout(4000);
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
             conn.setRequestProperty("Accept", "application/json");
 
             int responseCode = conn.getResponseCode();
+            Log.d(TAG, "Unlock fallback response code: " + responseCode);
+            
             if (responseCode != 200) {
                 Log.w(TAG, "Unlock fallback returned HTTP " + responseCode);
                 conn.disconnect();
@@ -297,9 +334,11 @@ public class DeviceGuardPollingService extends Service {
             conn.disconnect();
 
             String body = sb.toString();
+            Log.d(TAG, "Unlock fallback response: " + body);
+            
             // Buscar "blocked":false en la respuesta
             boolean isBlocked = body.contains("\"blocked\":true");
-            
+
             if (!isBlocked && lastKnownBlocked) {
                 Log.i(TAG, "Unlock fallback: server reports device is UNBLOCKED");
                 onDeviceUnblocked();
@@ -307,8 +346,14 @@ public class DeviceGuardPollingService extends Service {
                 Log.d(TAG, "Unlock fallback: device still blocked");
             }
 
+        } catch (java.net.UnknownHostException e) {
+            Log.e(TAG, "Unlock fallback failed: Unknown host - " + e.getMessage());
+        } catch (java.net.ConnectException e) {
+            Log.e(TAG, "Unlock fallback failed: Connection refused - " + e.getMessage());
+        } catch (java.net.SocketTimeoutException e) {
+            Log.e(TAG, "Unlock fallback failed: Connection timeout - " + e.getMessage());
         } catch (Exception e) {
-            Log.w(TAG, "Unlock fallback failed: " + e.getMessage());
+            Log.e(TAG, "Unlock fallback failed: " + e.getClass().getSimpleName() + " - " + e.getMessage(), e);
         }
     }
 
@@ -386,7 +431,7 @@ public class DeviceGuardPollingService extends Service {
     // ─────────────────────────────────────────────────────────────────────
 
     private void onDeviceBlocked() {
-        Log.i(TAG, "Device BLOCKED — activating kiosk, stopping server polling");
+        Log.i(TAG, "Device BLOCKED — activating kiosk mode");
 
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         prefs.edit()
@@ -394,14 +439,15 @@ public class DeviceGuardPollingService extends Service {
              .putBoolean(KEY_LOCKDOWN_ACTIVE, true)
              .apply();
 
-        // DETENER polling al servidor - cero consultas cuando está bloqueado
-        stopPolling();
-        
-        // Programar verificación LOCAL (sin servidor) para detectar desbloqueo
+        // Notificar a React Native que el dispositivo está bloqueado
+        DeviceModule.emitDeviceStateChanged(this.getReactContext(), true);
+
+        // NOTA: NO detenemos el polling - seguimos consultando cada 30s para detectar
+        // desbloqueo rápidamente. El servidor debería responder blocked=true hasta que
+        // el usuario pague.
+
+        // Programar verificación LOCAL (sin servidor) para detectar desbloqueo por si acaso
         scheduleLocalStateCheck();
-        
-        // Programar fallback MUY lento (5 min) por si el servidor necesita desbloquear
-        scheduleUnlockFallback();
 
         // Activar Lock Task via DevicePolicyManager
         DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
@@ -437,27 +483,37 @@ public class DeviceGuardPollingService extends Service {
 
         // Esperar 500ms para que la pantalla despierte
         handler.postDelayed(() -> {
-            // Abrir la app en la pantalla de bloqueo
-            Intent intent = new Intent(this, MainActivity.class);
+            // Abrir la app en la pantalla de bloqueo usando deep linking de Expo Router
+            // Usamos el esquema de URL registrado en el manifest: deviceguardapp://
+            Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
+                android.net.Uri.parse("deviceguardapp://device-blocked"));
             intent.addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK |
                 Intent.FLAG_ACTIVITY_CLEAR_TOP |
                 Intent.FLAG_ACTIVITY_SINGLE_TOP |
                 Intent.FLAG_ACTIVITY_NO_ANIMATION
             );
-            intent.putExtra("navigate_to", "device-blocked");
-            
+
             try {
                 startActivity(intent);
-                Log.i(TAG, "MainActivity started for blocked state");
+                Log.i(TAG, "MainActivity started for blocked state via deep link");
             } catch (Exception e) {
                 Log.e(TAG, "Failed to start MainActivity: " + e.getMessage());
+                // Fallback: intentar con el intent normal
+                Intent fallbackIntent = new Intent(this, MainActivity.class);
+                fallbackIntent.addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK |
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+                );
+                fallbackIntent.putExtra("navigate_to", "device-blocked");
+                startActivity(fallbackIntent);
             }
         }, 500);
     }
 
     private void onDeviceUnblocked() {
-        Log.i(TAG, "Device UNBLOCKED — resuming normal polling");
+        Log.i(TAG, "Device UNBLOCKED — device paid, releasing device");
 
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         prefs.edit()
@@ -465,11 +521,49 @@ public class DeviceGuardPollingService extends Service {
              .putBoolean(KEY_LOCKDOWN_ACTIVE, false)
              .apply();
 
-        // Detener fallback de desbloqueo
-        stopUnlockFallback();
+        // Notificar a React Native que el dispositivo está desbloqueado
+        DeviceModule.emitDeviceStateChanged(this.getReactContext(), false);
 
-        // REANUDAR polling normal al servidor
-        startPolling();
+        // Detener kiosk mode via DevicePolicyManager
+        DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName admin = new ComponentName(this, DeviceAdmin.class);
+        
+        if (dpm.isDeviceOwnerApp(getPackageName())) {
+            try {
+                dpm.setKeyguardDisabled(admin, false);
+                dpm.setLockTaskPackages(admin, new String[0]);
+                Log.i(TAG, "Kiosk mode disabled via DevicePolicyManager");
+            } catch (Exception e) {
+                Log.e(TAG, "Error disabling kiosk mode: " + e.getMessage());
+            }
+        }
+
+        // Detener Lock Task Mode si está activo
+        handler.postDelayed(() -> {
+            try {
+                // Intentar detener lock task desde el servicio
+                ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+                if (am != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (am.isInLockTaskMode()) {
+                        // Necesitamos una Activity para detener lock task
+                        // Abrimos MainActivity que se encargará de detenerlo
+                        Intent intent = new Intent(this, MainActivity.class);
+                        intent.addFlags(
+                            Intent.FLAG_ACTIVITY_NEW_TASK |
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP |
+                            Intent.FLAG_ACTIVITY_NO_ANIMATION
+                        );
+                        intent.putExtra("unlocked", true);
+                        intent.putExtra("navigate_to", "linking-success");
+                        startActivity(intent);
+                        Log.i(TAG, "Navigated to linking-success to release device");
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error releasing device: " + e.getMessage());
+            }
+        }, 500);
     }
 
     // ─────────────────────────────────────────────────────────────────────

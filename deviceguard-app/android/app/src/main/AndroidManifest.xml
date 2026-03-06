@@ -86,7 +86,6 @@
         android:name=".PersistentService"
         android:enabled="true"
         android:exported="false"
-        android:foregroundServiceType="dataSync"
         android:stopWithTask="false" />
     
     <activity android:name=".MainActivity"

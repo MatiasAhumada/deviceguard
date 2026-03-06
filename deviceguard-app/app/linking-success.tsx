@@ -6,6 +6,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Dimensions, NativeModules, Platform } from "react-native";
 import { provisioningService } from "@/src/services/provisioning.service";
 import { useKioskMode } from "@/src/hooks/useKioskMode";
+import { useDeviceStateListener } from "@/src/hooks/useDeviceStateListener";
 
 const { height } = Dimensions.get("window");
 
@@ -21,6 +22,43 @@ export default function LinkingSuccessScreen() {
   // Instanciar el control de kiosk pero SIN activarlo (enabled=false)
   const kioskControl = useKioskMode(false);
 
+  // Escuchar cambios de estado emitidos por el servicio nativo Java
+  // Esto detecta cuando el servidor marca el dispositivo como bloqueado
+  useDeviceStateListener(
+    // onBlocked: el servidor marcó el dispositivo como bloqueado
+    async () => {
+      if (!isBlockedRef.current) {
+        isBlockedRef.current = true;
+        console.log('[DG] Device blocked via native event from linking-success');
+        router.replace({ pathname: "/device-blocked" });
+      }
+    },
+    // onUnblocked: el servidor desbloqueó el dispositivo
+    async () => {
+      console.log('[DG] Device unblocked via native event');
+      await kioskControl.stopKiosk();
+    }
+  );
+
+  // Verificar estado inicial y detener kiosk si es necesario
+  useEffect(() => {
+    const checkInitialBlockedState = async () => {
+      if (!deviceId) return;
+      try {
+        const status = await provisioningService.checkStatus(deviceId as string);
+        if (!status.blocked) {
+          // El dispositivo está desbloqueado - asegurar que kiosk esté detenido
+          await kioskControl.stopKiosk();
+          console.log('[DG] Initial state: device unlocked, kiosk stopped');
+        }
+      } catch (e) {
+        console.warn('[DG] Error checking initial state:', e);
+      }
+    };
+    
+    checkInitialBlockedState();
+  }, [deviceId]);
+
   // Garantizar que el kiosk NUNCA esté activo en esta pantalla.
   // Esto cubre el caso donde se navega desde device-blocked con un
   // desbloqueo remoto y el kiosk todavía pudiera estar corriendo.
@@ -31,6 +69,7 @@ export default function LinkingSuccessScreen() {
   );
 
   // Arrancar el foreground polling service (corre en background aunque la app esté cerrada).
+  // Este servicio es el ÚNICO que hace polling al servidor (cada 30s).
   useEffect(() => {
     if (!deviceId || Platform.OS !== "android") return;
     const { DeviceModule } = NativeModules;
@@ -41,28 +80,8 @@ export default function LinkingSuccessScreen() {
       .catch((e: any) => console.warn("[DG] initPollingService error:", e));
   }, [deviceId]);
 
-  // Chequea el estado inicial. NO hacemos polling constante aquí porque 
-  // de eso se encarga el Foreground Service nativo en background.
-  useFocusEffect(
-    React.useCallback(() => {
-      if (!deviceId) return;
-
-      // ejecuta el check inmediato
-      (async () => {
-        try {
-          const status = await provisioningService.checkStatus(
-            deviceId as string
-          );
-          if (status.blocked) {
-            isBlockedRef.current = true;
-            router.replace({ pathname: "/device-blocked" });
-          }
-        } catch (e) {
-          console.warn("linking-success initial status check failed", e);
-        }
-      })();
-    }, [deviceId, router])
-  );
+  // NOTA: No hay polling local de React Native.
+  // El servicio nativo Java emite eventos cuando el estado cambia.
 
   // evita salir de esta pantalla; el dispositivo ya está sincronizado
   // pero permite que se navegue a device-blocked si fue bloqueado

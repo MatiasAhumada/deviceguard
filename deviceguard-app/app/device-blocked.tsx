@@ -8,6 +8,7 @@ import { Dimensions, NativeModules, Platform } from "react-native";
 import { useDeviceImei } from "@/src/hooks/useDeviceImei";
 import { provisioningService } from "@/src/services/provisioning.service";
 import { useKioskMode } from "@/src/hooks/useKioskMode";
+import { useDeviceStateListener } from "@/src/hooks/useDeviceStateListener";
 
 export default function DeviceBlockedScreen() {
   const router = useRouter();
@@ -15,6 +16,56 @@ export default function DeviceBlockedScreen() {
   const [pending, setPending] = useState<number | null>(null);
   const navigation = useNavigation();
   const isUnblockedRef = useRef(false);
+  const kioskControl = useKioskMode(true);
+
+  // Escuchar cambios de estado emitidos por el servicio nativo Java
+  // Esto reemplaza el polling local de React Native
+  useDeviceStateListener(
+    // onBlocked: ya estamos en la pantalla de bloqueado, no hacer nada
+    () => {
+      console.log('[DG] Device blocked event received (already in blocked screen)');
+    },
+    // onUnblocked: el servidor desbloqueó el dispositivo
+    async () => {
+      if (!isUnblockedRef.current) {
+        isUnblockedRef.current = true;
+        console.log('[DG] Device unblocked via native event');
+        await kioskControl.stopKiosk();
+        router.replace({ pathname: "/linking-success" });
+      }
+    }
+  );
+
+  // Polling de respaldo por si el evento nativo falla
+  // Verifica directamente SharedPreferences cada 2 segundos
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!deviceId) return;
+
+      const checkLocalState = async () => {
+        try {
+          const { DeviceModule } = NativeModules;
+          // Verificar estado local desde SharedPreferences
+          const status = await provisioningService.checkStatus(deviceId as string);
+          if (!status.blocked && !isUnblockedRef.current) {
+            isUnblockedRef.current = true;
+            console.log('[DG] Device unblocked via local polling');
+            await kioskControl.stopKiosk();
+            router.replace({ pathname: "/linking-success" });
+          }
+        } catch (e) {
+          // Silencioso
+        }
+      };
+
+      // Check inmediato
+      checkLocalState();
+      
+      // Verificar cada 2 segundos como respaldo
+      const intervalId = setInterval(checkLocalState, 2000);
+      return () => clearInterval(intervalId);
+    }, [deviceId, router, kioskControl])
+  );
 
   // Inicializar Background polling service por si esta pantalla
   // se carga directo post-reinicio sin haber pasado por linking-success localmente.
@@ -28,9 +79,7 @@ export default function DeviceBlockedScreen() {
       .catch((e: any) => console.warn("[DG] initPollingService error:", e));
   }, [deviceId]);
 
-
   // Activar modo kiosco cuando estemos en esta pantalla
-  const kioskControl = useKioskMode(true);
 
   // Bloquear navegación: solo permitir ir a payment-methods y volver
   useEffect(() => {
@@ -61,30 +110,9 @@ export default function DeviceBlockedScreen() {
     }, [kioskControl])
   );
 
-  // Polling cada 3s para detectar DESBLOQUEO remoto desde la web
-  useFocusEffect(
-    React.useCallback(() => {
-      if (!isReady || !deviceId) return;
-
-      const poll = async () => {
-        try {
-          const status = await provisioningService.checkStatus(deviceId as string);
-          if (!status.blocked && !isUnblockedRef.current) {
-            isUnblockedRef.current = true;
-            // Detener kiosk y volver a la pantalla principal vinculada
-            await kioskControl.stopKiosk();
-            router.replace({ pathname: "/linking-success" });
-          }
-        } catch (e) {
-          // Silencioso — reintenta en el siguiente tick
-        }
-      };
-
-      poll(); // check inmediato
-      const intervalId = setInterval(poll, 3000);
-      return () => clearInterval(intervalId);
-    }, [isReady, deviceId, router, kioskControl])
-  );
+  // NOTA: El polling al servidor lo hace exclusivamente el servicio nativo Java.
+  // No hay polling local de React Native para evitar duplicación y ahorrar batería.
+  // El servicio Java emite eventos cuando el estado cambia (bloqueado/desbloqueado).
 
   const handlePayment = () => {
     router.push("/payment-methods");
