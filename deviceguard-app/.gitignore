@@ -49,3 +49,4 @@ android/gradlew
 android/gradlew.bat
 android/local.properties
 android/app/debug.keystore
+node_modules/

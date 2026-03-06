@@ -1,5 +1,6 @@
 package com.deviceguard.kiosk;
 
+import android.app.ActivityManager;
 import android.app.admin.DeviceAdminReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -18,16 +19,16 @@ public class DeviceAdmin extends DeviceAdminReceiver {
     @Override
     public void onEnabled(Context context, Intent intent) {
         super.onEnabled(context, intent);
-        
+
         DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
         ComponentName adminComponent = new ComponentName(context, DeviceAdmin.class);
-        
+
         if (dpm.isDeviceOwnerApp(context.getPackageName())) {
             dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_FACTORY_RESET);
             dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_SAFE_BOOT);
             Log.i(TAG, "Device Owner enabled - Applied Factory Reset restriction.");
         }
-        
+
         launchApp(context);
     }
 
@@ -100,6 +101,73 @@ public class DeviceAdmin extends DeviceAdminReceiver {
                 Log.i(TAG, "Device Owner active but not linked yet. Launching app to provision.");
                 launchApp(context);
             }
+        }
+    }
+
+    /**
+     * Inicia el modo Kiosk (Lock Task) para bloquear el dispositivo en la app.
+     * Esto previene que el usuario pueda cerrar la app, acceder a home, recent apps,
+     * notificaciones, o cualquier otra función del sistema.
+     * 
+     * @param context Debe ser una instancia de Activity o tener FLAG_ACTIVITY_NEW_TASK
+     */
+    public static void startKioskMode(Context context) {
+        DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponent = new ComponentName(context, DeviceAdmin.class);
+
+        if (dpm == null || !dpm.isDeviceOwnerApp(context.getPackageName())) {
+            Log.w(TAG, "Cannot start kiosk mode: not device owner");
+            return;
+        }
+
+        try {
+            // Configurar los paquetes permitidos en lock task mode
+            String[] packages = {context.getPackageName()};
+            dpm.setLockTaskPackages(adminComponent, packages);
+
+            // Configurar features de lock task (none = más restrictivo)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                dpm.setLockTaskFeatures(adminComponent,
+                        DevicePolicyManager.LOCK_TASK_FEATURE_NONE);
+            }
+
+            // Guardar estado en SharedPreferences
+            SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            prefs.edit().putBoolean("isFullLockdownActive", true).apply();
+
+            Log.i(TAG, "Kiosk mode configured via DevicePolicyManager");
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error configuring kiosk mode: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Verifica si el Lock Task Mode está activo.
+     */
+    public static boolean isKioskActive(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            if (am != null) {
+                return am.isInLockTaskMode();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Detiene el modo Kiosk (Lock Task) para permitir navegación normal.
+     */
+    public static void stopKioskMode(Context context) {
+        try {
+            // Actualizar estado en SharedPreferences
+            SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            prefs.edit().putBoolean("isFullLockdownActive", false).apply();
+
+            Log.i(TAG, "Kiosk mode stopped");
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error stopping kiosk mode: " + e.getMessage(), e);
         }
     }
 

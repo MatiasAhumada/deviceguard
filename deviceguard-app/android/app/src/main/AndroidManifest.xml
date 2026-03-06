@@ -16,6 +16,10 @@
   <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
   <uses-permission android:name="android.permission.REORDER_TASKS"/>
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+  <!-- Permisos para AlarmManager y wake locks -->
+  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+  <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+  <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
   <queries>
     <intent>
       <action android:name="android.intent.action.VIEW"/>
@@ -27,6 +31,8 @@
     <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"/>
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS" android:value="0"/>
+    
+    <!-- DeviceAdmin Receiver -->
     <receiver
         android:name="com.deviceguard.kiosk.DeviceAdmin"
         android:label="DeviceGuard Admin"
@@ -46,28 +52,63 @@
             <action android:name="android.intent.action.USER_PRESENT" />
         </intent-filter>
     </receiver>
+    
+    <!-- BootReceiver para auto-inicio confiable -->
+    <receiver
+        android:name="com.deviceguard.kiosk.BootReceiver"
+        android:enabled="true"
+        android:exported="true"
+        android:directBootAware="true">
+        <intent-filter>
+            <action android:name="android.intent.action.BOOT_COMPLETED" />
+            <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            <action android:name="android.intent.action.USER_PRESENT" />
+            <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+        </intent-filter>
+    </receiver>
+    
+    <!-- ConnectivityWatchdog Service -->
     <service
         android:name=".ConnectivityWatchdog"
         android:enabled="true"
         android:exported="false" />
+    
+    <!-- DeviceGuardPollingService - Foreground Service para monitoreo -->
     <service
         android:name=".DeviceGuardPollingService"
         android:enabled="true"
         android:exported="false"
         android:foregroundServiceType="dataSync"
         android:stopWithTask="false" />
-    <activity android:name=".MainActivity" 
-        android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" 
-        android:launchMode="singleTask" 
-        android:windowSoftInputMode="adjustResize" 
-        android:theme="@style/Theme.App.SplashScreen" 
-        android:exported="true" 
+    
+    <!-- PersistentService - Guardián que asegura que el polling siempre esté activo -->
+    <service
+        android:name=".PersistentService"
+        android:enabled="true"
+        android:exported="false"
+        android:foregroundServiceType="dataSync"
+        android:stopWithTask="false" />
+    
+    <activity android:name=".MainActivity"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode"
+        android:launchMode="singleTask"
+        android:windowSoftInputMode="adjustResize"
+        android:theme="@style/Theme.App.SplashScreen"
+        android:exported="true"
         android:screenOrientation="portrait"
-        android:excludeFromRecents="true"
-        android:lockTaskMode="if_whitelisted">
+        android:excludeFromRecents="false"
+        android:showWhenLocked="true"
+        android:turnScreenOn="true"
+        android:lockTaskMode="always"
+        android:resumeWhilePausing="true"
+        android:relinquishTaskIdentity="false"
+        android:autoRemoveFromRecents="false"
+        android:taskAffinity=""
+        android:persistableMode="persistNever">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>
+        <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
       <intent-filter>
         <action android:name="android.intent.action.VIEW"/>

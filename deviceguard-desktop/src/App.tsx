@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
 declare global {
@@ -16,8 +16,13 @@ function App() {
   const [status, setStatus] = useState<"idle" | "detecting" | "installing" | "configuring" | "success" | "error">("idle");
   const [logs, setLogs] = useState<string[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<string | null>(null);
+  const [mobileLogs, setMobileLogs] = useState<string[]>([]);
+  const [isLogViewerOpen, setIsLogViewerOpen] = useState(false);
+  const logViewerRef = useRef<any>(null);
+  const logProcessRef = useRef<any>(null);
 
   const appendLog = (msg: string) => setLogs((prev) => [...prev, msg]);
+  const appendMobileLog = (msg: string) => setMobileLogs((prev) => [...prev.slice(-500), msg]); // Keep last 500 lines
 
   const runCommand = (command: string): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -203,13 +208,103 @@ function App() {
     }
   };
 
+  // Funciones para el visor de logs del dispositivo móvil
+  const startLogViewer = () => {
+    if (!connectedDevice) {
+      appendLog("⚠️ No hay dispositivo conectado");
+      return;
+    }
+
+    if (logProcessRef.current) {
+      appendLog("El visor de logs ya está en ejecución");
+      return;
+    }
+
+    const { spawn } = window.require('child_process');
+    const path = window.require('path');
+    const fs = window.require('fs');
+
+    const getAdbPath = () => {
+      const isPackaged = __dirname.includes('app.asar');
+      if (isPackaged) {
+        return path.join(process.resourcesPath, 'bin', 'adb.exe');
+      }
+      return path.join(__dirname, '..', 'bin', 'adb.exe');
+    };
+
+    const adbPath = fs.existsSync(getAdbPath()) ? getAdbPath() : 'adb';
+    
+    // Comando para ver logs de DeviceGuard específicamente
+    const logcatCommand = `"${adbPath}" logcat -s DGPollingService:V PersistentService:V MainActivity:V DeviceAdmin:V BootReceiver:V *:E`;
+    
+    appendLog("📱 Iniciando visor de logs del dispositivo móvil...");
+    appendLog(`Comando: ${logcatCommand}`);
+    
+    const logProcess = spawn(logcatCommand, { shell: true });
+    logProcessRef.current = logProcess;
+
+    logProcess.stdout.on('data', (data: Buffer) => {
+      const lines = data.toString().split('\n').filter(line => line.trim());
+      lines.forEach(line => {
+        if (line.trim()) {
+          appendMobileLog(line);
+        }
+      });
+    });
+
+    logProcess.stderr.on('data', (data: Buffer) => {
+      appendMobileLog(`[ERROR] ${data.toString()}`);
+    });
+
+    logProcess.on('close', () => {
+      appendLog("Visor de logs cerrado");
+      logProcessRef.current = null;
+    });
+
+    logProcess.on('error', (err: any) => {
+      appendLog(`Error en el visor de logs: ${err.message}`);
+      logProcessRef.current = null;
+    });
+
+    setIsLogViewerOpen(true);
+  };
+
+  const stopLogViewer = () => {
+    if (logProcessRef.current) {
+      logProcessRef.current.kill();
+      logProcessRef.current = null;
+      appendLog("Visor de logs detenido");
+      setIsLogViewerOpen(false);
+    }
+  };
+
+  const clearMobileLogs = () => {
+    setMobileLogs([]);
+    appendLog("Logs del móvil limpiados");
+  };
+
+  const copyMobileLogs = () => {
+    const text = mobileLogs.join('\n');
+    navigator.clipboard.writeText(text);
+    appendLog("Logs copiados al portapapeles");
+  };
+
+  // Limpiar proceso al desmontar
+  useEffect(() => {
+    return () => {
+      if (logProcessRef.current) {
+        logProcessRef.current.kill();
+      }
+    };
+  }, []);
+
   return (
     <div className="container">
       <header className="header">
         <h1>DeviceGuard <span>Provisioner</span></h1>
         <p>Herramienta Oficial de Configuración y Kiosco</p>
       </header>
-      
+
       <main className="main-content">
         <div className="status-card">
           <div className={`status-indicator ${status}`}>
@@ -221,19 +316,36 @@ function App() {
             {status === 'success' && '¡Dispositivo Provisionado!'}
             {status === 'error' && 'Error de configuración'}
           </div>
-          
-          <button 
-            className="provision-btn"
-            disabled={!connectedDevice || (status !== 'idle' && status !== 'success' && status !== 'error')}
-            onClick={handleProvision}
-          >
-            <span className="icon">⚡</span>
-            {connectedDevice ? 'Provisionar Equipo' : 'Conecta un Equipo USB'}
-          </button>
+
+          <div className="button-group">
+            <button
+              className="provision-btn"
+              disabled={!connectedDevice || (status !== 'idle' && status !== 'success' && status !== 'error')}
+              onClick={handleProvision}
+            >
+              <span className="icon">⚡</span>
+              {connectedDevice ? 'Provisionar Equipo' : 'Conecta un Equipo USB'}
+            </button>
+            
+            <button
+              className={`log-viewer-btn ${isLogViewerOpen ? 'active' : ''}`}
+              disabled={!connectedDevice}
+              onClick={isLogViewerOpen ? stopLogViewer : startLogViewer}
+              title="Ver logs del dispositivo móvil en tiempo real"
+            >
+              <span className="icon">📱</span>
+              {isLogViewerOpen ? 'Detener Logs' : 'Ver Logs Móvil'}
+            </button>
+          </div>
         </div>
 
         <div className="terminal-log">
-          <div className="terminal-header">Logs de ADB</div>
+          <div className="terminal-header">
+            Logs de ADB
+            {connectedDevice && (
+              <span className="device-badge">📱 {connectedDevice}</span>
+            )}
+          </div>
           <div className="terminal-body">
             {logs.length === 0 ? (
               <span className="empty-log">Conecte el dispositivo mediante USB y habilite la Depuración USB.</span>
@@ -243,6 +355,52 @@ function App() {
           </div>
         </div>
       </main>
+
+      {/* Modal del Visor de Logs del Móvil */}
+      {isLogViewerOpen && (
+        <div className="log-viewer-modal" ref={logViewerRef}>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>📱 Logs del Dispositivo Móvil</h2>
+              <div className="modal-actions">
+                <button onClick={clearMobileLogs} className="btn-secondary" title="Limpiar logs">
+                  🗑️ Limpiar
+                </button>
+                <button onClick={copyMobileLogs} className="btn-secondary" title="Copiar logs">
+                  📋 Copiar
+                </button>
+                <button onClick={stopLogViewer} className="btn-danger" title="Cerrar visor">
+                  ❌ Cerrar
+                </button>
+              </div>
+            </div>
+            <div className="modal-body">
+              <div className="mobile-logs">
+                {mobileLogs.length === 0 ? (
+                  <div className="empty-logs">Esperando logs del dispositivo...</div>
+                ) : (
+                  mobileLogs.map((log, i) => (
+                    <div key={i} className="log-entry">
+                      <span className="log-prefix">{`> `}</span>
+                      <span className={log.includes('ERROR') || log.includes('Exception') ? 'log-error' : 'log-text'}>
+                        {log}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <div className="log-info">
+                <span>Mostrando últimos {mobileLogs.length} logs</span>
+                <span className="log-filters">
+                  Filtros: DGPollingService | PersistentService | MainActivity | DeviceAdmin | BootReceiver
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
