@@ -38,7 +38,6 @@ export function useDeviceStateListener(
     const subscription = eventEmitter.addListener(
       EVENT_DEVICE_STATE_CHANGED,
       (blocked: boolean) => {
-        console.log('[DG] Device state changed:', blocked ? 'BLOCKED' : 'UNBLOCKED');
         
         if (blocked) {
           onBlockedRef.current?.();

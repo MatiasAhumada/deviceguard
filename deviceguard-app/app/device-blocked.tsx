@@ -29,7 +29,6 @@ export default function DeviceBlockedScreen() {
     async () => {
       if (!isUnblockedRef.current) {
         isUnblockedRef.current = true;
-        console.log('[DG] Device unblocked via native event');
         await kioskControl.stopKiosk();
         router.replace({ pathname: "/linking-success" });
       }
@@ -49,7 +48,6 @@ export default function DeviceBlockedScreen() {
           const status = await provisioningService.checkStatus(deviceId as string);
           if (!status.blocked && !isUnblockedRef.current) {
             isUnblockedRef.current = true;
-            console.log('[DG] Device unblocked via local polling');
             await kioskControl.stopKiosk();
             router.replace({ pathname: "/linking-success" });
           }

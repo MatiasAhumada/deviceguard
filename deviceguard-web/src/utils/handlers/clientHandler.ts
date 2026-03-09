@@ -77,7 +77,6 @@ export function clientSuccessHandler(
     toastOptions = {},
   }: Omit<HandlerOptions, "defaultMessage"> = {}
 ): void {
-  if (logToConsole) console.log(message);
   if (showToast) {
     toastSuccess(`${messagePrefix}${message}`, toastOptions);
   }

@@ -11,8 +11,10 @@ import {
   createDeviceSchema,
   DEVICE_TYPE_LABELS,
 } from "@/schemas/device.schema";
+import { sendNotificationSchema, SendNotificationDto } from "@/schemas/notification.schema";
 import { deviceService } from "@/services/device.service";
 import { clientService } from "@/services/client.service";
+import { notificationService } from "@/services/notification.service";
 import { IDevice, IDeviceFormValues } from "@/types";
 import {
   clientErrorHandler,
@@ -24,9 +26,10 @@ import {
   ViewIcon,
   PencilEdit02Icon,
   Delete02Icon,
+  Notification03Icon,
 } from "hugeicons-react";
 import { useDebounce } from "@/hooks/useDebounce";
-import { DeviceStatus, DeviceType } from "@prisma/client";
+import { DeviceStatus, DeviceType, NotificationType } from "@prisma/client";
 import { createPortal } from "react-dom";
 import { getCenteredMenuPosition } from "@/utils/menu.util";
 
@@ -52,6 +55,14 @@ export default function DevicesPage() {
   const [deviceToDelete, setDeviceToDelete] = useState<IDevice | null>(null);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const [deviceToBlock, setDeviceToBlock] = useState<IDevice | null>(null);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [deviceToSendNotification, setDeviceToSendNotification] =
+    useState<IDevice | null>(null);
+  const [notificationData, setNotificationData] = useState<SendNotificationDto>({
+    title: "",
+    message: "",
+    type: NotificationType.WARNING_1,
+  });
 
   useEffect(() => {
     loadDevices();
@@ -62,10 +73,20 @@ export default function DevicesPage() {
   }, [debouncedSearch]);
 
   useEffect(() => {
-    if (isModalOpen || isDeleteModalOpen || isBlockModalOpen) {
+    if (
+      isModalOpen ||
+      isDeleteModalOpen ||
+      isBlockModalOpen ||
+      isNotificationModalOpen
+    ) {
       setOpenMenuId(null);
     }
-  }, [isModalOpen, isDeleteModalOpen, isBlockModalOpen]);
+  }, [
+    isModalOpen,
+    isDeleteModalOpen,
+    isBlockModalOpen,
+    isNotificationModalOpen,
+  ]);
 
   const loadDevices = async (search?: string) => {
     try {
@@ -169,6 +190,47 @@ export default function DevicesPage() {
     } catch (error) {
       clientErrorHandler(error);
     }
+  };
+
+  const handleSendNotification = (device: IDevice) => {
+    setDeviceToSendNotification(device);
+    setNotificationData({
+      title: "",
+      message: "",
+      type: NotificationType.WARNING_1,
+    });
+    setOpenMenuId(null);
+    setIsNotificationModalOpen(true);
+  };
+
+  const confirmSendNotification = async () => {
+    if (!deviceToSendNotification) return;
+
+    try {
+      await notificationService.send(deviceToSendNotification.id, {
+        title: notificationData.title,
+        message: notificationData.message,
+        type: notificationData.type,
+      });
+      clientSuccessHandler("Notificación enviada exitosamente");
+      setIsNotificationModalOpen(false);
+      setDeviceToSendNotification(null);
+    } catch (error: unknown) {
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Error al enviar notificación";
+      clientErrorHandler({ message: errorMessage });
+    }
+  };
+
+  const handleCloseNotificationModal = () => {
+    setDeviceToSendNotification(null);
+    setNotificationData({
+      title: "",
+      message: "",
+      type: NotificationType.WARNING_1,
+    });
+    setIsNotificationModalOpen(false);
   };
 
   const handleCloseModal = () => {
@@ -383,6 +445,18 @@ export default function DevicesPage() {
                               <span>Bloquear</span>
                             )}
                           </button>
+                          {device.status === DeviceStatus.SOLD_SYNCED && (
+                            <button
+                              onClick={() => handleSendNotification(device)}
+                              className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-onyx-600 flex items-center gap-3 transition-colors"
+                            >
+                              <Notification03Icon
+                                size={16}
+                                className="text-silver-400"
+                              />
+                              Notificaciones
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDeleteDevice(device)}
                             className="w-full text-left px-4 py-2.5 text-sm text-strawberry_red hover:bg-onyx-600 rounded-b-lg flex items-center gap-3 transition-colors"
@@ -632,6 +706,61 @@ export default function DevicesPage() {
               ? "El dispositivo volverá a estar disponible para el usuario."
               : "El dispositivo no podrá ser utilizado hasta que se desbloquee."}
           </p>
+        </GenericModal>
+
+        <GenericModal
+          open={isNotificationModalOpen}
+          onOpenChange={handleCloseNotificationModal}
+          title="Enviar Notificación"
+          description={`Enviar notificación push a ${deviceToSendNotification?.name}`}
+          footer={
+            <>
+              <Button variant="outline" onClick={handleCloseNotificationModal}>
+                Cancelar
+              </Button>
+              <Button
+                className="bg-mahogany_red hover:bg-mahogany_red-600 text-white"
+                onClick={confirmSendNotification}
+              >
+                Enviar Notificación
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="notification-title">Título</Label>
+              <Input
+                id="notification-title"
+                value={notificationData.title}
+                onChange={(e) =>
+                  setNotificationData({
+                    ...notificationData,
+                    title: e.target.value,
+                  })
+                }
+                placeholder="Ej: Recordatorio de pago"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notification-message">Mensaje</Label>
+              <Input
+                id="notification-message"
+                value={notificationData.message}
+                onChange={(e) =>
+                  setNotificationData({
+                    ...notificationData,
+                    message: e.target.value,
+                  })
+                }
+                placeholder="Ej: Tienes una cuota próxima a vencer"
+              />
+            </div>
+            <p className="text-xs text-silver-400">
+              Esta notificación aparecerá en el dispositivo móvil
+              inmediatamente.
+            </p>
+          </div>
         </GenericModal>
       </div>
     </DashboardLayout>

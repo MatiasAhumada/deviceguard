@@ -29,13 +29,11 @@ export default function LinkingSuccessScreen() {
     async () => {
       if (!isBlockedRef.current) {
         isBlockedRef.current = true;
-        console.log('[DG] Device blocked via native event from linking-success');
         router.replace({ pathname: "/device-blocked" });
       }
     },
     // onUnblocked: el servidor desbloqueó el dispositivo
     async () => {
-      console.log('[DG] Device unblocked via native event');
       await kioskControl.stopKiosk();
     }
   );
@@ -49,11 +47,9 @@ export default function LinkingSuccessScreen() {
         if (!status.blocked) {
           // El dispositivo está desbloqueado - asegurar que kiosk esté detenido
           await kioskControl.stopKiosk();
-          console.log('[DG] Initial state: device unlocked, kiosk stopped');
         }
       } catch (e) {
-        console.warn('[DG] Error checking initial state:', e);
-      }
+        console.warn("[DG] Error checking initial blocked state:", e);}
     };
     
     checkInitialBlockedState();

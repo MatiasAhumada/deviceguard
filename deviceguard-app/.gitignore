@@ -50,3 +50,5 @@ android/gradlew.bat
 android/local.properties
 android/app/debug.keystore
 node_modules/
+
+/google-services.json

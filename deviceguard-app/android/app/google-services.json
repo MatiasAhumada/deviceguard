@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "939889754006",
+    "project_id": "julianpiredda",
+    "storage_bucket": "julianpiredda.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:939889754006:android:008ed1941b13a9adbca7b7",
+        "android_client_info": {
+          "package_name": "com.deviceguard.kiosk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPqBTlBtVUWUuFOE7meuR8qghy1f2nLBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

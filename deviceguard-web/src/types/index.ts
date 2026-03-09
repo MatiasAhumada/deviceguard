@@ -73,7 +73,7 @@ export interface IDeviceSync extends PrismaDeviceSync {
 
 export interface INotification extends PrismaNotification {
   device: PrismaDevice;
-  installment: PrismaInstallment;
+  installment: PrismaInstallment | null;
 }
 
 export interface IFinancingPlan extends PrismaFinancingPlan {}

@@ -78,10 +78,7 @@ export const deviceControlService = {
       // TODO: Enviar push notification al dispositivo
       // TODO: Usar Firebase Cloud Messaging o similar para notificar al móvil
 
-      console.log(
-        `[DeviceControl] Dispositivo ${deviceId} bloqueado exitosamente`
-      );
-
+     
       return {
         success: true,
         message: `Dispositivo ${device.name} bloqueado exitosamente`,
@@ -145,9 +142,7 @@ export const deviceControlService = {
 
       // TODO: Enviar push notification al dispositivo
 
-      console.log(
-        `[DeviceControl] Dispositivo ${deviceId} desbloqueado exitosamente`
-      );
+    
 
       return {
         success: true,

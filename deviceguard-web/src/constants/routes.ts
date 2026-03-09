@@ -30,6 +30,7 @@ export const API_ROUTES = {
   SALES: "/api/sales",
   DEVICE_SYNCS: {
     ACTIVATE: "/api/device-syncs",
+    FCM_TOKEN: "/api/device-syncs/fcm-token",
     SYNC_STATUS: (activationCode: string) =>
       `/api/sales/${activationCode}/sync`,
   },

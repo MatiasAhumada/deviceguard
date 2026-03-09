@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ user }, { status: httpStatus.OK });
   } catch (error) {
-    console.log("Error verifying token:", error);
     return apiErrorHandler({ error: error as ApiError, request });
   }
 }

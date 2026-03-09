@@ -312,6 +312,7 @@ model DeviceSync {
   id       String   @id @default(cuid())
   deviceId String   @unique
   imei     String   @unique
+  fcmToken String?
   syncedAt DateTime @default(now())
   lastPing DateTime @default(now())
 
@@ -326,13 +327,13 @@ model DeviceSync {
 model Notification {
   id            String           @id @default(cuid())
   deviceId      String
-  installmentId String
+  installmentId String?
   type          NotificationType
   message       String
   sentAt        DateTime         @default(now())
 
   device      Device      @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  installment Installment @relation(fields: [installmentId], references: [id], onDelete: Cascade)
+  installment Installment? @relation(fields: [installmentId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }
