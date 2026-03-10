@@ -5,6 +5,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { YStack, Text, Button } from "tamagui";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Dimensions, NativeModules, Platform } from "react-native";
+import Constants from "expo-constants";
 import { useDeviceImei } from "@/src/hooks/useDeviceImei";
 import { provisioningService } from "@/src/services/provisioning.service";
 import { useKioskMode } from "@/src/hooks/useKioskMode";
@@ -65,13 +66,15 @@ export default function DeviceBlockedScreen() {
     }, [deviceId, router, kioskControl])
   );
 
-  // Inicializar Background polling service por si esta pantalla
-  // se carga directo post-reinicio sin haber pasado por linking-success localmente.
   useEffect(() => {
     if (!deviceId || Platform.OS !== "android") return;
     const { DeviceModule } = NativeModules;
     if (!DeviceModule?.initPollingService) return;
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.39:3003";
+    const apiUrl = Constants.expoConfig?.extra?.API_URL;
+    if (!apiUrl) {
+      console.error("[DG] FATAL: API_URL no está configurada en app.config");
+      throw new Error("Falta configurar API_URL en app.config");
+    }
     DeviceModule.initPollingService(deviceId as string, apiUrl)
       .then(() => console.log("[DG] Background polling service started from block"))
       .catch((e: any) => console.warn("[DG] initPollingService error:", e));

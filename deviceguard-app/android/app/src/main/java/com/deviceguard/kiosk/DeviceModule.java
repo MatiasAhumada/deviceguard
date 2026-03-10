@@ -106,11 +106,11 @@ public class DeviceModule extends ReactContextBaseJavaModule {
      * service de polling para que funcione sin que la app esté abierta.
      */
     @ReactMethod
-    public void initPollingService(String deviceId, String apiUrl, Promise promise) {
+    public void initPollingService(String imei, String apiUrl, Promise promise) {
         try {
             reactContext.getSharedPreferences(DeviceGuardPollingService.PREFS_NAME, Context.MODE_PRIVATE)
                 .edit()
-                .putString(DeviceGuardPollingService.KEY_DEVICE_ID, deviceId)
+                .putString(DeviceGuardPollingService.KEY_DEVICE_ID, imei)
                 .putString(DeviceGuardPollingService.KEY_API_URL, apiUrl)
                 .putBoolean(DeviceGuardPollingService.KEY_IS_LINKED, true)
                 .apply();
@@ -122,7 +122,7 @@ public class DeviceModule extends ReactContextBaseJavaModule {
             }
 
             DeviceGuardPollingService.start(reactContext);
-            Log.i(TAG, "Polling service initialized — deviceId=" + deviceId);
+            Log.i(TAG, "Polling service initialized — IMEI=" + imei);
             promise.resolve("Polling service started");
         } catch (Exception e) {
             Log.e(TAG, "Error initializing polling service: " + e.getMessage());

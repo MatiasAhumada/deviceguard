@@ -4,6 +4,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { YStack, Text, XStack } from "tamagui";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Dimensions, NativeModules, Platform } from "react-native";
+import Constants from "expo-constants";
 import { provisioningService } from "@/src/services/provisioning.service";
 import { useKioskMode } from "@/src/hooks/useKioskMode";
 import { useDeviceStateListener } from "@/src/hooks/useDeviceStateListener";
@@ -64,15 +65,17 @@ export default function LinkingSuccessScreen() {
     }, [kioskControl])
   );
 
-  // Arrancar el foreground polling service (corre en background aunque la app esté cerrada).
-  // Este servicio es el ÚNICO que hace polling al servidor (cada 30s).
   useEffect(() => {
     if (!deviceId || Platform.OS !== "android") return;
     const { DeviceModule } = NativeModules;
     if (!DeviceModule?.initPollingService) return;
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.39:3003";
+    const apiUrl = Constants.expoConfig?.extra?.API_URL;
+    if (!apiUrl) {
+      console.error("[DG] FATAL: API_URL no está configurada en app.config");
+      throw new Error("Falta configurar API_URL en app.config");
+    }
     DeviceModule.initPollingService(deviceId as string, apiUrl)
-      .then(() => console.log("[DG] Background polling service started"))
+      .then(() => console.log("[DG] Background polling service started with IMEI:", deviceId))
       .catch((e: any) => console.warn("[DG] initPollingService error:", e));
   }, [deviceId]);
 
