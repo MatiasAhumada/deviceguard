@@ -50,23 +50,33 @@ export async function POST(
     if (!device.sync) {
       throw new ApiError({
         status: httpStatus.BAD_REQUEST,
-        message: "El dispositivo no está sincronizado",
+        message: "El dispositivo no está vinculado. El cliente debe vincular el dispositivo con la app móvil primero.",
       });
     }
 
     const fcmToken = device.sync.fcmToken;
 
-    // Si hay token FCM, enviar notificación push
-    if (fcmToken) {
-      await sendPushNotification(fcmToken, {
-        title: validatedData.title,
-        body: validatedData.message,
-        data: {
-          deviceId,
-          type: validatedData.type,
-        },
+    console.log('[NOTIFICATION] Device:', deviceId);
+    console.log('[NOTIFICATION] Device name:', device.name);
+    console.log('[NOTIFICATION] IMEI:', device.sync.imei);
+    console.log('[NOTIFICATION] FCM Token:', fcmToken);
+
+    if (!fcmToken) {
+      throw new ApiError({
+        status: httpStatus.BAD_REQUEST,
+        message: "El dispositivo no tiene token FCM registrado. Asegurate de que la app móvil esté instalada y vinculada.",
       });
     }
+
+    // Si hay token FCM, enviar notificación push
+    await sendPushNotification(fcmToken, {
+      title: validatedData.title,
+      body: validatedData.message,
+      data: {
+        deviceId,
+        type: validatedData.type,
+      },
+    });
 
     // Guardar notificación en la DB
     const notification = await prisma.notification.create({
@@ -81,18 +91,10 @@ export async function POST(
       },
     });
 
-    const response: {
-      success: boolean;
-      notification: typeof notification;
-      warning?: string;
-    } = {
+    const response = {
       success: true,
       notification,
     };
-
-    if (!fcmToken) {
-      response.warning = "Dispositivo sin token FCM registrado. Notificación guardada en DB.";
-    }
 
     return NextResponse.json(response, { status: httpStatus.OK });
   } catch (error) {

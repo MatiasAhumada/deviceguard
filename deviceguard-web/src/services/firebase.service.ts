@@ -48,6 +48,12 @@ export async function sendPushNotification(
 ): Promise<boolean> {
   initializeFirebase();
 
+  console.log('[FCM-SEND] Attempting to send notification');
+  console.log('[FCM-SEND] Token:', token);
+  console.log('[FCM-SEND] Title:', notification.title);
+  console.log('[FCM-SEND] Body:', notification.body);
+  console.log('[FCM-SEND] Data:', JSON.stringify(notification.data));
+
   try {
     const message = {
       notification: {
@@ -78,9 +84,10 @@ export async function sendPushNotification(
     };
 
     await admin.messaging().send(message);
+    console.log('[FCM-SEND] Notification sent successfully');
     return true;
   } catch (error) {
-    console.error("[FCM] Error al enviar notificación:", error);
+    console.error("[FCM-SEND] Error al enviar notificación:", error);
     return false;
   }
 }

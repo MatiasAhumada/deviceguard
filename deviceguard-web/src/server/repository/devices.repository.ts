@@ -13,8 +13,6 @@ export class DevicesRepository {
       where: {
         adminId,
         deletedAt: null,
-        // Sin filtro de status: se muestran todos los estados
-        // (ACTIVE, SOLD_PENDING, SOLD_SYNCED, BLOCKED, INACTIVE, MAINTENANCE)
         ...(search && {
           OR: [
             { name: { contains: search, mode: "insensitive" } },
@@ -25,6 +23,7 @@ export class DevicesRepository {
       include: {
         admin: true,
         client: true,
+        sync: true,
       },
       orderBy: { createdAt: "desc" },
     });

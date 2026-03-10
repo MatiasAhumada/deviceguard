@@ -445,7 +445,7 @@ export default function DevicesPage() {
                               <span>Bloquear</span>
                             )}
                           </button>
-                          {device.status === DeviceStatus.SOLD_SYNCED && (
+                          {device.status === DeviceStatus.SOLD_SYNCED && device.sync && (
                             <button
                               onClick={() => handleSendNotification(device)}
                               className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-onyx-600 flex items-center gap-3 transition-colors"

@@ -55,6 +55,7 @@ export interface IDevice extends PrismaDevice {
   admin: PrismaAdmin;
   client: PrismaClient | null;
   installments?: PrismaInstallment[];
+  sync?: PrismaDeviceSync | null;
 }
 
 export interface IDeviceFormValues extends Omit<

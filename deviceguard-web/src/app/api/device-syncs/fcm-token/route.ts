@@ -20,7 +20,9 @@ const corsHeaders = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('[FCM-TOKEN] Request body:', JSON.stringify(body, null, 2));
     const validatedData = registerFCMTokenSchema.parse(body);
+    console.log('[FCM-TOKEN] Validated data:', JSON.stringify(validatedData, null, 2));
 
     let deviceSync = await prisma.deviceSync.findUnique({
       where: { imei: validatedData.imei },
@@ -30,6 +32,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (deviceSync) {
+      console.log('[FCM-TOKEN] Updating existing DeviceSync:', deviceSync.id);
+      console.log('[FCM-TOKEN] Old token:', deviceSync.fcmToken);
+      console.log('[FCM-TOKEN] New token:', validatedData.fcmToken);
       deviceSync = await prisma.deviceSync.update({
         where: { id: deviceSync.id },
         data: { fcmToken: validatedData.fcmToken },
@@ -37,6 +42,7 @@ export async function POST(request: NextRequest) {
           device: true,
         },
       });
+      console.log('[FCM-TOKEN] Token updated successfully');
     } else {
       throw new ApiError({
         status: httpStatus.NOT_FOUND,
