@@ -75,7 +75,7 @@ export default function LinkingSuccessScreen() {
       throw new Error("Falta configurar API_URL en app.config");
     }
     DeviceModule.initPollingService(deviceId as string, apiUrl)
-      .then(() => console.log("[DG] Background polling service started"))
+      .then(() => console.log("[DG] Background polling service started with IMEI:", deviceId))
       .catch((e: any) => console.warn("[DG] initPollingService error:", e));
   }, [deviceId]);
 

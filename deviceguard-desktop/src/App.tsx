@@ -67,14 +67,20 @@ function App() {
            const out = await runCommand('adb devices');
            const lines = out.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
            const devices = lines.slice(1).filter((l: string) => l.includes('device') && !l.includes('unauthorized'));
-           
+
            if (devices.length > 0) {
              const deviceName = devices[0].split('\t')[0];
              if (connectedDevice !== deviceName) {
+                // Dispositivo cambiado o reconectado
+                const wasDisconnected = connectedDevice === null;
                 setConnectedDevice(deviceName);
+                if (wasDisconnected && isLogViewerOpen) {
+                  appendLog("📱 Dispositivo reconectado - Los logs se reanudarán automáticamente");
+                }
              }
            } else {
              if (connectedDevice !== null) {
+                // Dispositivo desconectado
                 setConnectedDevice(null);
              }
            }
@@ -84,7 +90,7 @@ function App() {
       }, 2000);
     }
     return () => clearInterval(interval);
-  }, [status, connectedDevice]);
+  }, [status, connectedDevice, isLogViewerOpen]);
 
   const handleProvision = async () => {
     try {
@@ -236,13 +242,17 @@ function App() {
 
     // Comando para ver logs de DeviceGuard y Firebase
     // Usamos findstr para filtrar las etiquetas relevantes
-    const logcatCommand = `"${adbPath}" logcat | findstr "DGPollingService DeviceGuard FCM NOTIFICATION firebase.messaging"`;
+    // -s para imprimir líneas que coinciden, -i para ignorar mayúsculas/minúsculas
+    const logcatCommand = `"${adbPath}" -s ${connectedDevice} logcat -s DGPollingService DeviceGuard FCM NOTIFICATION firebase.messaging`;
 
     appendLog("📱 Iniciando visor de logs del dispositivo móvil...");
     appendLog(`Comando: ${logcatCommand}`);
-    
-    const logProcess = spawn(logcatCommand, { shell: true });
+    appendLog(`Dispositivo: ${connectedDevice}`);
+
+    const logProcess = spawn(logcatCommand, { shell: true, detached: false });
     logProcessRef.current = logProcess;
+
+    let isClosed = false;
 
     logProcess.stdout.on('data', (data: Buffer) => {
       const lines = data.toString().split('\n').filter(line => line.trim());
@@ -254,27 +264,65 @@ function App() {
     });
 
     logProcess.stderr.on('data', (data: Buffer) => {
-      appendMobileLog(`[ERROR] ${data.toString()}`);
+      const stderr = data.toString();
+      appendMobileLog(`[ERROR] ${stderr}`);
+      // Detectar errores de conexión del dispositivo
+      if (stderr.includes('device') && (stderr.includes('not found') || stderr.includes('no devices'))) {
+        appendLog("⚠️ Dispositivo desconectado detectado");
+        if (!isClosed) {
+          isClosed = true;
+          logProcessRef.current = null;
+          setIsLogViewerOpen(false);
+        }
+      }
     });
 
-    logProcess.on('close', () => {
-      appendLog("Visor de logs cerrado");
+    logProcess.on('close', (code: number | null) => {
+      appendLog(`Visor de logs cerrado (código: ${code})`);
       logProcessRef.current = null;
+      if (!isClosed) {
+        isClosed = true;
+        setIsLogViewerOpen(false);
+      }
     });
 
     logProcess.on('error', (err: any) => {
       appendLog(`Error en el visor de logs: ${err.message}`);
       logProcessRef.current = null;
+      if (!isClosed) {
+        isClosed = true;
+        setIsLogViewerOpen(false);
+      }
     });
 
     setIsLogViewerOpen(true);
   };
 
   const stopLogViewer = () => {
+    appendLog("Deteniendo visor de logs...");
     if (logProcessRef.current) {
-      logProcessRef.current.kill();
-      logProcessRef.current = null;
-      appendLog("Visor de logs detenido");
+      // Matar el proceso y todos sus hijos (en Windows)
+      try {
+        const { exec } = window.require('child_process');
+        // En Windows, usamos taskkill para matar el árbol de procesos
+        exec(`taskkill /pid ${logProcessRef.current.pid} /T /F`, (err: any) => {
+          if (err) {
+            // Fallback: kill simple
+            logProcessRef.current?.kill();
+          }
+          logProcessRef.current = null;
+          appendLog("Visor de logs detenido");
+          setIsLogViewerOpen(false);
+        });
+      } catch (e) {
+        logProcessRef.current.kill();
+        logProcessRef.current = null;
+        appendLog("Visor de logs detenido");
+        setIsLogViewerOpen(false);
+      }
+    } else {
+      // Si no hay proceso, igual cerramos el modal por seguridad
+      appendLog("No hay proceso activo, cerrando visor");
       setIsLogViewerOpen(false);
     }
   };
@@ -290,14 +338,32 @@ function App() {
     appendLog("Logs copiados al portapapeles");
   };
 
+  const resumeLogViewer = () => {
+    if (connectedDevice) {
+      appendMobileLog("--- Reconectando al dispositivo ---");
+      startLogViewer();
+    }
+  };
+
   // Limpiar proceso al desmontar
   useEffect(() => {
     return () => {
       if (logProcessRef.current) {
         logProcessRef.current.kill();
+        logProcessRef.current = null;
       }
     };
   }, []);
+
+  // Detectar desconexión del dispositivo mientras el visor de logs está abierto
+  useEffect(() => {
+    if (isLogViewerOpen && !connectedDevice && logProcessRef.current) {
+      appendLog("⚠️ Dispositivo desconectado mientras se mostraban logs");
+      // El proceso se cerrará solo, pero forzamos la limpieza
+      logProcessRef.current = null;
+      setIsLogViewerOpen(false);
+    }
+  }, [connectedDevice, isLogViewerOpen]);
 
   return (
     <div className="container">
@@ -377,7 +443,25 @@ function App() {
             </div>
             <div className="modal-body">
               <div className="mobile-logs">
-                {mobileLogs.length === 0 ? (
+                {!connectedDevice ? (
+                  <div className="empty-logs">
+                    <div style={{ marginBottom: '16px', color: '#F59E0B' }}>
+                      ⚠️ Dispositivo desconectado
+                    </div>
+                    <div style={{ marginBottom: '16px' }}>
+                      Conecta el dispositivo para continuar viendo logs
+                    </div>
+                    {mobileLogs.length > 0 && (
+                      <button 
+                        onClick={resumeLogViewer} 
+                        className="btn-secondary"
+                        style={{ marginTop: '8px' }}
+                      >
+                        🔄 Reanudar logs
+                      </button>
+                    )}
+                  </div>
+                ) : mobileLogs.length === 0 ? (
                   <div className="empty-logs">Esperando logs del dispositivo...</div>
                 ) : (
                   mobileLogs.map((log, i) => (

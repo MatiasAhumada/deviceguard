@@ -217,19 +217,19 @@ public class DeviceGuardPollingService extends Service {
 
     private void pollServer() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String deviceId = prefs.getString(KEY_DEVICE_ID, null);
+        String imei = prefs.getString(KEY_DEVICE_ID, null);
         String apiUrl = prefs.getString(KEY_API_URL, null);
 
-        if (deviceId == null || apiUrl == null) {
-            Log.w(TAG, "Missing deviceId or apiUrl, skipping poll.");
+        if (imei == null || apiUrl == null) {
+            Log.w(TAG, "Missing IMEI or apiUrl, skipping poll.");
             return;
         }
 
-        Log.d(TAG, "Polling server for deviceId: " + deviceId + " at " + apiUrl);
+        Log.d(TAG, "Polling server for IMEI: " + imei + " at " + apiUrl);
 
         try {
-            // GET /api/device-syncs/{deviceId}
-            String endpoint = apiUrl + "/api/device-syncs/" + deviceId;
+            // GET /api/device-syncs/{imei}
+            String endpoint = apiUrl + "/api/device-syncs/" + imei;
             Log.d(TAG, "Poll endpoint: " + endpoint);
             
             URL url = new URL(endpoint);
@@ -297,16 +297,16 @@ public class DeviceGuardPollingService extends Service {
         Log.d(TAG, "Unlock fallback: checking if server unlocked device");
 
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String deviceId = prefs.getString(KEY_DEVICE_ID, null);
+        String imei = prefs.getString(KEY_DEVICE_ID, null);
         String apiUrl = prefs.getString(KEY_API_URL, null);
 
-        if (deviceId == null || apiUrl == null) {
-            Log.w(TAG, "Missing deviceId or apiUrl for unlock fallback.");
+        if (imei == null || apiUrl == null) {
+            Log.w(TAG, "Missing IMEI or apiUrl for unlock fallback.");
             return;
         }
 
         try {
-            String endpoint = apiUrl + "/api/device-syncs/" + deviceId;
+            String endpoint = apiUrl + "/api/device-syncs/" + imei;
             Log.d(TAG, "Unlock fallback endpoint: " + endpoint);
             
             URL url = new URL(endpoint);
