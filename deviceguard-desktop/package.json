@@ -21,7 +21,7 @@
       "target": "portable"
     },
     "directories": {
-      "output": "dist-electron"
+      "output": "release"
     },
     "files": [
       "dist/**/*",
