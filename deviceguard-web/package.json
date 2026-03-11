@@ -4,9 +4,9 @@
   "private": true,
   "packageManager": "pnpm@10.32.0",
   "scripts": {
-    "dev": "next dev -p 3003",
+    "dev": "next dev -p 3003 -H 0.0.0.0",
     "build": "next build",
-    "start": "next start -p 3003",
+    "start": "next start -p 3003 -H 0.0.0.0",
     "lint": "eslint",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\" --ignore-path .prettierignore",
     "postinstall": "prisma generate",
