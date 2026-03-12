@@ -10,10 +10,18 @@ export interface FcmPayload {
 
 export const fcmService = {
   async sendToDevice(imei: string, payload: FcmPayload): Promise<boolean> {
+    console.log('[FCM-SERVICE] Starting sendToDevice:', { imei, type: payload.type });
+    
     const deviceSyncRepository = new DeviceSyncRepository();
     const deviceSync = await deviceSyncRepository.findByImei(imei);
+    
+    console.log('[FCM-SERVICE] DeviceSync found:', { 
+      hasDeviceSync: !!deviceSync, 
+      hasFcmToken: !!deviceSync?.fcmToken 
+    });
 
     if (!deviceSync?.fcmToken) {
+      console.log('[FCM-SERVICE] No FCM token found');
       return false;
     }
 
@@ -25,7 +33,9 @@ export const fcmService = {
         timestamp: payload.timestamp,
       };
 
-      await admin.messaging().send({
+      console.log('[FCM-SERVICE] Sending via Firebase...', { token: deviceSync.fcmToken.slice(0, 50) + '...' });
+      
+      const response = await admin.messaging().send({
         token: deviceSync.fcmToken,
         data,
         android: {
@@ -34,8 +44,10 @@ export const fcmService = {
         },
       });
 
+      console.log('[FCM-SERVICE] Firebase response:', response);
       return true;
-    } catch {
+    } catch (error) {
+      console.error('[FCM-SERVICE] Error sending FCM:', error);
       return false;
     }
   },
