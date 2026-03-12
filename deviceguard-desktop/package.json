@@ -18,7 +18,8 @@
     "appId": "com.deviceguard.provisioner",
     "productName": "DeviceGuard Provisioner",
     "win": {
-      "target": "portable"
+      "target": "portable",
+      "signAndEditExecutable": false
     },
     "directories": {
       "output": "release"
