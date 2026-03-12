@@ -213,23 +213,21 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
     private void navigateToUnblockedScreen() {
         SharedPreferences prefs = getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE);
         prefs.edit()
-             .putBoolean("isLinked", false)
+             .putBoolean("isLinked", true)
              .putBoolean("isLocked", false)
              .putBoolean("isFullLockdownActive", false)
-             .remove("deviceId")
-             .remove("apiUrl")
              .apply();
 
-        Log.i(TAG, "Device unblocked - Restarting app...");
+        Log.i(TAG, "Device unblocked - Navigating to linking-success...");
         
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(Intent.ACTION_VIEW,
+            Uri.parse("deviceguardapp://linking-success"));
         intent.addFlags(
             Intent.FLAG_ACTIVITY_NEW_TASK |
-            Intent.FLAG_ACTIVITY_CLEAR_TASK
+            Intent.FLAG_ACTIVITY_CLEAR_TOP |
+            Intent.FLAG_ACTIVITY_SINGLE_TOP
         );
         startActivity(intent);
-        
-        System.exit(0);
     }
 
     private ReactApplicationContext getReactContext() {
