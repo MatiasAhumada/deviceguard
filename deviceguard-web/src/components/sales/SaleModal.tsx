@@ -15,8 +15,6 @@ import { financingUtils } from "@/utils/financing.util";
 import { salesUtils } from "@/utils/sales.util";
 import { ShoppingCart01Icon } from "hugeicons-react";
 import { CreateFinancingPlanModal } from "@/components/sales/CreateFinancingPlanModal";
-import { CreateDeviceModal } from "@/components/sales/CreateDeviceModal";
-import { CreateClientModal } from "@/components/sales/CreateClientModal";
 import { StepIndicator } from "@/components/sales/StepIndicator";
 import { DeviceSelectionStep } from "@/components/sales/DeviceSelectionStep";
 import { FinancingPlanCard } from "@/components/sales/FinancingPlanCard";
@@ -24,6 +22,8 @@ import { BlockRulesInput } from "@/components/sales/BlockRulesInput";
 import { ActivationCodeDisplay } from "@/components/sales/ActivationCodeDisplay";
 import { useSaleForm } from "@/hooks/useSaleForm";
 import { motion, AnimatePresence } from "framer-motion";
+import { DeviceModal } from "@/components/entities/DeviceModal";
+import { ClientModal } from "@/components/entities/ClientModal";
 
 interface SaleModalProps {
   open: boolean;
@@ -411,13 +411,13 @@ export function SaleModal({
         }}
       />
 
-      <CreateDeviceModal
+      <DeviceModal
         open={isCreateDeviceModalOpen}
         onOpenChange={setIsCreateDeviceModalOpen}
         onSuccess={handleDeviceCreated}
       />
 
-      <CreateClientModal
+      <ClientModal
         open={isCreateClientModalOpen}
         onOpenChange={setIsCreateClientModalOpen}
         onSuccess={handleClientCreated}

@@ -7,10 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GenericModal } from "@/components/common/GenericModal";
-import {
-  createDeviceSchema,
-  DEVICE_TYPE_LABELS,
-} from "@/schemas/device.schema";
+import { DeviceModal } from "@/components/entities/DeviceModal";
 import {
   sendNotificationSchema,
   SendNotificationDto,
@@ -19,7 +16,7 @@ import { deviceService } from "@/services/device.service";
 import { deviceControlService } from "@/services/deviceControl.service";
 import { clientService } from "@/services/client.service";
 import { notificationService } from "@/services/notification.service";
-import { IDevice, IDeviceFormValues } from "@/types";
+import { IDevice } from "@/types";
 import {
   clientErrorHandler,
   clientSuccessHandler,
@@ -39,36 +36,27 @@ import { getCenteredMenuPosition } from "@/utils/menu.util";
 
 export default function DevicesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState<IDeviceFormValues>({
-    name: "",
-    type: DeviceType.SMARTPHONE,
-    model: "",
-    serialNumber: "",
-    status: DeviceStatus.ACTIVE,
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [devices, setDevices] = useState<IDevice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearch = useDebounce(searchTerm, 300);
   const [selectedDevice, setSelectedDevice] = useState<IDevice | null>(null);
   const [isViewMode, setIsViewMode] = useState(false);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deviceToDelete, setDeviceToDelete] = useState<IDevice | null>(null);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const [deviceToBlock, setDeviceToBlock] = useState<IDevice | null>(null);
+  const [devices, setDevices] = useState<IDevice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 300);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [deviceToSendNotification, setDeviceToSendNotification] =
     useState<IDevice | null>(null);
-  const [notificationData, setNotificationData] = useState<SendNotificationDto>(
-    {
-      title: "",
-      message: "",
-      type: NotificationType.WARNING_1,
-    }
-  );
+  const [notificationData, setNotificationData] = useState<SendNotificationDto>({
+    title: "",
+    message: "",
+    type: NotificationType.WARNING_1,
+  });
+  const [notificationErrors, setNotificationErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadDevices();
@@ -87,12 +75,7 @@ export default function DevicesPage() {
     ) {
       setOpenMenuId(null);
     }
-  }, [
-    isModalOpen,
-    isDeleteModalOpen,
-    isBlockModalOpen,
-    isNotificationModalOpen,
-  ]);
+  }, [isModalOpen, isDeleteModalOpen, isBlockModalOpen, isNotificationModalOpen]);
 
   const loadDevices = async (search?: string) => {
     try {
@@ -107,14 +90,6 @@ export default function DevicesPage() {
   };
 
   const handleOpenModal = () => {
-    setFormData({
-      name: "",
-      type: DeviceType.SMARTPHONE,
-      model: "",
-      serialNumber: "",
-      status: DeviceStatus.ACTIVE,
-    });
-    setErrors({});
     setSelectedDevice(null);
     setIsViewMode(false);
     setIsModalOpen(true);
@@ -122,13 +97,6 @@ export default function DevicesPage() {
 
   const handleViewDevice = (device: IDevice) => {
     setSelectedDevice(device);
-    setFormData({
-      name: device.name,
-      type: device.type,
-      model: device.model || "",
-      serialNumber: device.serialNumber || "",
-      status: device.status,
-    });
     setIsViewMode(true);
     setOpenMenuId(null);
     setIsModalOpen(true);
@@ -136,13 +104,6 @@ export default function DevicesPage() {
 
   const handleEditDevice = (device: IDevice) => {
     setSelectedDevice(device);
-    setFormData({
-      name: device.name,
-      type: device.type,
-      model: device.model || "",
-      serialNumber: device.serialNumber || "",
-      status: device.status,
-    });
     setIsViewMode(false);
     setOpenMenuId(null);
     setIsModalOpen(true);
@@ -164,38 +125,13 @@ export default function DevicesPage() {
     if (!deviceToBlock) return;
 
     try {
-      const willBlock = deviceToBlock.status !== DeviceStatus.BLOCKED;
-
-      // Usar FCM para bloqueo/desbloqueo en dispositivos sincronizados
-      if (deviceToBlock.sync) {
-        if (willBlock) {
-          await deviceControlService.lockDevice(deviceToBlock.id);
-          clientSuccessHandler(
-            `📱 ${deviceToBlock.name} ha sido bloqueado. Notificación enviada al dispositivo.`
-          );
-        } else {
-          await deviceControlService.unlockDevice(deviceToBlock.id);
-          clientSuccessHandler(
-            `📱 ${deviceToBlock.name} ha sido desbloqueado. Notificación enviada al dispositivo.`
-          );
-        }
+      if (deviceToBlock.status === DeviceStatus.BLOCKED) {
+        await deviceControlService.unlockDevice(deviceToBlock.id);
+        clientSuccessHandler("Dispositivo desbloqueado exitosamente");
       } else {
-        // Para dispositivos no sincronizados, solo actualizar estado localmente
-        const newStatus = willBlock
-          ? DeviceStatus.BLOCKED
-          : DeviceStatus.ACTIVE;
-        await deviceService.update(deviceToBlock.id, {
-          name: deviceToBlock.name,
-          type: deviceToBlock.type,
-          model: deviceToBlock.model || "",
-          serialNumber: deviceToBlock.serialNumber || "",
-          status: newStatus,
-        });
-        clientSuccessHandler(
-          `Dispositivo ${willBlock ? "bloqueado" : "desbloqueado"} exitosamente`
-        );
+        await deviceControlService.lockDevice(deviceToBlock.id);
+        clientSuccessHandler("Dispositivo bloqueado exitosamente");
       }
-
       await loadDevices();
       setIsBlockModalOpen(false);
       setDeviceToBlock(null);
@@ -225,6 +161,7 @@ export default function DevicesPage() {
       message: "",
       type: NotificationType.WARNING_1,
     });
+    setNotificationErrors({});
     setOpenMenuId(null);
     setIsNotificationModalOpen(true);
   };
@@ -232,53 +169,7 @@ export default function DevicesPage() {
   const confirmSendNotification = async () => {
     if (!deviceToSendNotification) return;
 
-    try {
-      await notificationService.send(deviceToSendNotification.id, {
-        title: notificationData.title,
-        message: notificationData.message,
-        type: notificationData.type,
-      });
-      clientSuccessHandler("Notificación enviada exitosamente");
-      setIsNotificationModalOpen(false);
-      setDeviceToSendNotification(null);
-    } catch (error: unknown) {
-      const errorMessage =
-        (error as { response?: { data?: { message?: string } } })?.response
-          ?.data?.message || "Error al enviar notificación";
-      clientErrorHandler({ message: errorMessage });
-    }
-  };
-
-  const handleCloseNotificationModal = () => {
-    setDeviceToSendNotification(null);
-    setNotificationData({
-      title: "",
-      message: "",
-      type: NotificationType.WARNING_1,
-    });
-    setIsNotificationModalOpen(false);
-  };
-
-  const handleCloseModal = () => {
-    setFormData({
-      name: "",
-      type: DeviceType.SMARTPHONE,
-      model: "",
-      serialNumber: "",
-      status: DeviceStatus.ACTIVE,
-    });
-    setErrors({});
-    setSelectedDevice(null);
-    setIsViewMode(false);
-    setIsModalOpen(false);
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-  };
-
-  const handleSubmit = async () => {
-    const result = createDeviceSchema.safeParse(formData);
+    const result = sendNotificationSchema.safeParse(notificationData);
 
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
@@ -286,23 +177,22 @@ export default function DevicesPage() {
         const path = err.path.join(".");
         fieldErrors[path] = err.message;
       });
-      setErrors(fieldErrors);
+      setNotificationErrors(fieldErrors);
       return;
     }
 
     try {
-      if (selectedDevice) {
-        await deviceService.update(selectedDevice.id, result.data);
-        clientSuccessHandler("Dispositivo actualizado exitosamente");
-      } else {
-        await deviceService.create(result.data);
-        clientSuccessHandler("Dispositivo creado exitosamente");
-      }
-      await loadDevices();
-      handleCloseModal();
+      await notificationService.send(deviceToSendNotification.id, result.data);
+      clientSuccessHandler("Notificación enviada exitosamente");
+      setIsNotificationModalOpen(false);
+      setDeviceToSendNotification(null);
     } catch (error) {
       clientErrorHandler(error);
     }
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
   };
 
   return (
@@ -333,11 +223,9 @@ export default function DevicesPage() {
                       {initials.toUpperCase().slice(0, 2)}
                     </div>
                     <div>
-                      <p className="font-semibold text-base text-onyx">
-                        {device.name}
-                      </p>
-                      <p className="text-sm font-medium text-onyx">
-                        {DEVICE_TYPE_LABELS[device.type]}
+                      <p className="font-semibold text-base text-onyx">{device.name}</p>
+                      <p className="text-sm font-medium text-silver-500">
+                        {device.type}
                       </p>
                     </div>
                   </div>
@@ -508,7 +396,7 @@ export default function DevicesPage() {
           keyExtractor={(device: IDevice) => device.id}
           emptyMessage="No hay dispositivos registrados"
           loading={loading}
-          searchPlaceholder="Buscar..."
+          searchPlaceholder="Buscar por nombre, serial o IMEI..."
           onSearch={handleSearch}
           totalLabel={`MOSTRANDO ${devices.length} DISPOSITIVOS`}
           actions={
@@ -521,8 +409,8 @@ export default function DevicesPage() {
                 <span className="hidden sm:inline">Exportar</span>
               </Button>
               <Button
+                className="gap-2 bg-mahogany_red hover:bg-mahogany_red/90 flex-1 sm:flex-none text-sm"
                 onClick={handleOpenModal}
-                className="gap-2 bg-mahogany_red hover:bg-mahogany_red-600 flex-1 sm:flex-none text-sm"
               >
                 <span className="text-lg text-white">+</span>
                 <span className="text-white">Nuevo Dispositivo</span>
@@ -531,141 +419,15 @@ export default function DevicesPage() {
           }
         />
 
-        <GenericModal
+        <DeviceModal
           open={isModalOpen}
-          onOpenChange={handleCloseModal}
-          title={
-            selectedDevice
-              ? isViewMode
-                ? "Ver Dispositivo"
-                : "Editar Dispositivo"
-              : "Nuevo Dispositivo"
-          }
-          description={
-            selectedDevice
-              ? isViewMode
-                ? "Información del dispositivo"
-                : "Actualizar información del dispositivo"
-              : "Crear un nuevo dispositivo en el sistema"
-          }
-          size="lg"
-          footer={
-            <>
-              <Button variant="outline" onClick={handleCloseModal}>
-                {isViewMode ? "Cerrar" : "Cancelar"}
-              </Button>
-              {!isViewMode && (
-                <Button
-                  className="bg-mahogany_red hover:bg-mahogany_red-600 text-amber-50"
-                  onClick={handleSubmit}
-                >
-                  {selectedDevice ? "Actualizar" : "Crear Dispositivo"}
-                </Button>
-              )}
-            </>
-          }
-        >
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nombre</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => {
-                  setFormData({ ...formData, name: e.target.value });
-                  if (errors.name) setErrors({ ...errors, name: "" });
-                }}
-                placeholder="Ingrese el nombre del dispositivo"
-                disabled={isViewMode}
-                className={
-                  errors.name
-                    ? "border-destructive focus:border-destructive focus:ring-destructive"
-                    : ""
-                }
-              />
-              {errors.name && (
-                <p className="text-xs text-destructive">{errors.name}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="type">Tipo</Label>
-              <select
-                id="type"
-                value={formData.type}
-                onChange={(e) => {
-                  setFormData({
-                    ...formData,
-                    type: e.target.value as DeviceType,
-                  });
-                  if (errors.type) setErrors({ ...errors, type: "" });
-                }}
-                disabled={isViewMode}
-                className={`w-full px-3 py-2 rounded-md border bg-background text-sm ${
-                  errors.type
-                    ? "border-destructive focus:border-destructive focus:ring-destructive"
-                    : ""
-                }`}
-              >
-                {Object.entries(DEVICE_TYPE_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              {errors.type && (
-                <p className="text-xs text-destructive">{errors.type}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="model">Modelo (Opcional)</Label>
-              <Input
-                id="model"
-                value={formData.model || ""}
-                onChange={(e) => {
-                  setFormData({ ...formData, model: e.target.value });
-                }}
-                placeholder="Ej: MacBook Pro 2023"
-                disabled={isViewMode}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="serialNumber">Número de Serie (Opcional)</Label>
-              <Input
-                id="serialNumber"
-                value={formData.serialNumber || ""}
-                onChange={(e) => {
-                  setFormData({ ...formData, serialNumber: e.target.value });
-                }}
-                placeholder="Ej: ABC123XYZ"
-                disabled={isViewMode}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Estado</Label>
-              <select
-                id="status"
-                value={formData.status}
-                onChange={(e) => {
-                  setFormData({
-                    ...formData,
-                    status: e.target.value as DeviceStatus,
-                  });
-                }}
-                disabled={isViewMode}
-                className="w-full px-3 py-2 rounded-md border bg-background text-sm"
-              >
-                <option value={DeviceStatus.ACTIVE}>Activo</option>
-                <option value={DeviceStatus.INACTIVE}>Inactivo</option>
-                <option value={DeviceStatus.MAINTENANCE}>Mantenimiento</option>
-                <option value={DeviceStatus.BLOCKED}>Bloqueado</option>
-              </select>
-            </div>
-          </div>
-        </GenericModal>
+          onOpenChange={setIsModalOpen}
+          device={selectedDevice}
+          viewMode={isViewMode}
+          onSuccess={() => {
+            loadDevices();
+          }}
+        />
 
         <GenericModal
           open={isDeleteModalOpen}
@@ -730,28 +492,39 @@ export default function DevicesPage() {
             </>
           }
         >
-          <p className="text-sm text-silver-400">
-            {deviceToBlock?.status === DeviceStatus.BLOCKED
-              ? "El dispositivo volverá a estar disponible para el usuario."
-              : "El dispositivo no podrá ser utilizado hasta que se desbloquee."}
-          </p>
+          {deviceToBlock?.status === DeviceStatus.BLOCKED ? (
+            <p className="text-sm text-silver-400">
+              El dispositivo se desbloqueará y podrá ser utilizado normalmente.
+            </p>
+          ) : (
+            <div className="bg-destructive/10 border border-destructive rounded p-3">
+              <p className="text-sm text-destructive">
+                El dispositivo se bloqueará completamente. El cliente no podrá
+                usar el dispositivo hasta que pague o desbloquees manualmente.
+              </p>
+            </div>
+          )}
         </GenericModal>
 
         <GenericModal
           open={isNotificationModalOpen}
-          onOpenChange={handleCloseNotificationModal}
-          title="Enviar Notificación"
-          description={`Enviar notificación push a ${deviceToSendNotification?.name}`}
+          onOpenChange={setIsNotificationModalOpen}
+          title="Enviar Notificación Push"
+          description={`Enviando a: ${deviceToSendNotification?.name}`}
+          size="md"
           footer={
             <>
-              <Button variant="outline" onClick={handleCloseNotificationModal}>
+              <Button
+                variant="outline"
+                onClick={() => setIsNotificationModalOpen(false)}
+              >
                 Cancelar
               </Button>
               <Button
-                className="bg-mahogany_red hover:bg-mahogany_red-600 text-white"
+                className="bg-mahogany_red hover:bg-mahogany_red/90 text-white"
                 onClick={confirmSendNotification}
               >
-                Enviar Notificación
+                Enviar
               </Button>
             </>
           }
@@ -762,33 +535,59 @@ export default function DevicesPage() {
               <Input
                 id="notification-title"
                 value={notificationData.title}
-                onChange={(e) =>
+                onChange={(e) => {
                   setNotificationData({
                     ...notificationData,
                     title: e.target.value,
-                  })
+                  });
+                  if (notificationErrors.title) {
+                    const newErrors = { ...notificationErrors };
+                    delete newErrors.title;
+                    setNotificationErrors(newErrors);
+                  }
+                }}
+                placeholder="Título de la notificación"
+                className={
+                  notificationErrors.title
+                    ? "border-destructive focus:border-destructive focus:ring-destructive"
+                    : ""
                 }
-                placeholder="Ej: Recordatorio de pago"
               />
+              {notificationErrors.title && (
+                <p className="text-xs text-destructive">
+                  {notificationErrors.title}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="notification-message">Mensaje</Label>
               <Input
                 id="notification-message"
                 value={notificationData.message}
-                onChange={(e) =>
+                onChange={(e) => {
                   setNotificationData({
                     ...notificationData,
                     message: e.target.value,
-                  })
+                  });
+                  if (notificationErrors.message) {
+                    const newErrors = { ...notificationErrors };
+                    delete newErrors.message;
+                    setNotificationErrors(newErrors);
+                  }
+                }}
+                placeholder="Mensaje de la notificación"
+                className={
+                  notificationErrors.message
+                    ? "border-destructive focus:border-destructive focus:ring-destructive"
+                    : ""
                 }
-                placeholder="Ej: Tienes una cuota próxima a vencer"
               />
+              {notificationErrors.message && (
+                <p className="text-xs text-destructive">
+                  {notificationErrors.message}
+                </p>
+              )}
             </div>
-            <p className="text-xs text-silver-400">
-              Esta notificación aparecerá en el dispositivo móvil
-              inmediatamente.
-            </p>
           </div>
         </GenericModal>
       </div>

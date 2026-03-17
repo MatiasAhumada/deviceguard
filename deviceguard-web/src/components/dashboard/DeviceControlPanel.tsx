@@ -7,7 +7,13 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Lock, LockOpen, AlertCircle, CheckCircle, Loader } from "lucide-react";
+import {
+  LockIcon,
+  LockedIcon,
+  AlertDiamondIcon,
+  CheckmarkCircle02Icon,
+  Loading02Icon,
+} from "hugeicons-react";
 import { Button } from "@/components/ui/button";
 import { deviceControlService } from "@/services/deviceControl.service";
 import {
@@ -103,14 +109,14 @@ export const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({
   };
 
   const getStatusIcon = () => {
-    const IconComponent = currentStatus ? Lock : LockOpen;
+    const IconComponent = currentStatus ? LockIcon : LockedIcon;
     return (
       <motion.div
         initial={{ rotate: 0 }}
         animate={{ rotate: prevStatus !== currentStatus ? 360 : 0 }}
         transition={{ duration: 0.3 }}
       >
-        <IconComponent className="w-5 h-5 text-white" />
+        <IconComponent size={20} className="text-white" />
       </motion.div>
     );
   };
@@ -152,10 +158,10 @@ export const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({
               animate={{ opacity: [1, 0.5, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             >
-              <AlertCircle className="w-5 h-5 text-white" />
+              <AlertDiamondIcon size={20} className="text-white" />
             </motion.div>
           )}
-          {!currentStatus && <CheckCircle className="w-5 h-5 text-white" />}
+          {!currentStatus && <CheckmarkCircle02Icon size={20} className="text-white" />}
         </div>
       </motion.div>
 
@@ -171,9 +177,9 @@ export const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({
             className="bg-mahogany_red hover:bg-mahogany_red/90 text-white flex items-center gap-2"
           >
             {isLoading ? (
-              <Loader className="w-4 h-4 animate-spin" />
+              <Loading02Icon size={16} className="animate-spin" />
             ) : (
-              <Lock className="w-4 h-4" />
+              <LockIcon size={16} />
             )}
             Bloquear
           </Button>
@@ -189,9 +195,9 @@ export const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({
             className="bg-green-700 hover:bg-green-700/90 text-white flex items-center gap-2"
           >
             {isLoading ? (
-              <Loader className="w-4 h-4 animate-spin" />
+              <Loading02Icon size={16} className="animate-spin" />
             ) : (
-              <LockOpen className="w-4 h-4" />
+              <LockedIcon size={16} />
             )}
             Desbloquear
           </Button>
@@ -256,7 +262,7 @@ export const DeviceControlPanel: React.FC<DeviceControlPanelProps> = ({
                 } text-white`}
               >
                 {isLoading ? (
-                  <Loader className="w-4 h-4 animate-spin mr-2" />
+                  <Loading02Icon size={16} className="animate-spin mr-2" />
                 ) : null}
                 {action === "lock" ? "Bloquear" : "Desbloquear"}
               </Button>

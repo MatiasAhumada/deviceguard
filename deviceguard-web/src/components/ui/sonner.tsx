@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  CircleCheck,
-  Info,
-  LoaderCircle,
-  OctagonX,
-  TriangleAlert,
-} from "lucide-react";
+  CheckmarkCircle02Icon,
+  InformationSquareIcon,
+  Loading02Icon,
+  CancelCircleIcon,
+  AlertCircleIcon,
+} from "hugeicons-react";
 import { Toaster as Sonner } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
@@ -20,11 +20,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
       closeButton={false}
       duration={4000}
       icons={{
-        success: <CircleCheck className="h-4 w-4" />,
-        info: <Info className="h-4 w-4" />,
-        warning: <TriangleAlert className="h-4 w-4" />,
-        error: <OctagonX className="h-4 w-4" />,
-        loading: <LoaderCircle className="h-4 w-4 animate-spin" />,
+        success: <CheckmarkCircle02Icon size={16} />,
+        info: <InformationSquareIcon size={16} />,
+        warning: <AlertCircleIcon size={16} />,
+        error: <CancelCircleIcon size={16} />,
+        loading: <Loading02Icon size={16} className="animate-spin" />,
       }}
       toastOptions={{
         classNames: {
