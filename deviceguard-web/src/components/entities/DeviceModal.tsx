@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GenericModal } from "@/components/common/GenericModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,24 +11,29 @@ import {
   DEVICE_TYPE_LABELS,
   DEVICE_STATUS_LABELS,
 } from "@/schemas/device.schema";
+import { IDevice, IDeviceFormValues } from "@/types";
 import { DeviceStatus, DeviceType } from "@prisma/client";
 import {
   clientErrorHandler,
   clientSuccessHandler,
 } from "@/utils/handlers/clientError.handler";
 
-interface CreateDeviceModalProps {
+interface DeviceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  device?: IDevice | null;
+  viewMode?: boolean;
   onSuccess: () => void;
 }
 
-export function CreateDeviceModal({
+export function DeviceModal({
   open,
   onOpenChange,
+  device,
+  viewMode = false,
   onSuccess,
-}: CreateDeviceModalProps) {
-  const [formData, setFormData] = useState({
+}: DeviceModalProps) {
+  const [formData, setFormData] = useState<IDeviceFormValues>({
     name: "",
     type: DeviceType.SMARTPHONE as DeviceType,
     model: "",
@@ -36,6 +41,30 @@ export function CreateDeviceModal({
     status: DeviceStatus.ACTIVE as DeviceStatus,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isViewMode, setIsViewMode] = useState(viewMode);
+
+  useEffect(() => {
+    if (device && open) {
+      setFormData({
+        name: device.name,
+        type: device.type,
+        model: device.model || "",
+        serialNumber: device.serialNumber || "",
+        status: device.status,
+      });
+      setIsViewMode(viewMode);
+    } else if (open) {
+      setFormData({
+        name: "",
+        type: DeviceType.SMARTPHONE as DeviceType,
+        model: "",
+        serialNumber: "",
+        status: DeviceStatus.ACTIVE as DeviceStatus,
+      });
+      setIsViewMode(false);
+    }
+    setErrors({});
+  }, [device, viewMode, open]);
 
   const handleClose = () => {
     setFormData({
@@ -63,8 +92,13 @@ export function CreateDeviceModal({
     }
 
     try {
-      await deviceService.create(result.data);
-      clientSuccessHandler("Dispositivo creado exitosamente");
+      if (device) {
+        await deviceService.update(device.id, result.data);
+        clientSuccessHandler("Dispositivo actualizado exitosamente");
+      } else {
+        await deviceService.create(result.data);
+        clientSuccessHandler("Dispositivo creado exitosamente");
+      }
       handleClose();
       onSuccess();
     } catch (error) {
@@ -76,20 +110,34 @@ export function CreateDeviceModal({
     <GenericModal
       open={open}
       onOpenChange={handleClose}
-      title="Nuevo Dispositivo"
-      description="Crear un nuevo dispositivo en el sistema"
+      title={
+        device
+          ? isViewMode
+            ? "Ver Dispositivo"
+            : "Editar Dispositivo"
+          : "Nuevo Dispositivo"
+      }
+      description={
+        device
+          ? isViewMode
+            ? "Información del dispositivo"
+            : "Actualizar información del dispositivo"
+          : "Crear un nuevo dispositivo en el sistema"
+      }
       size="lg"
       footer={
         <>
           <Button variant="outline" onClick={handleClose}>
-            Cancelar
+            {isViewMode ? "Cerrar" : "Cancelar"}
           </Button>
-          <Button
-            className="bg-mahogany_red hover:bg-mahogany_red-600 text-amber-50"
-            onClick={handleSubmit}
-          >
-            Crear Dispositivo
-          </Button>
+          {!isViewMode && (
+            <Button
+              className="bg-mahogany_red hover:bg-mahogany_red/90 text-white font-medium"
+              onClick={handleSubmit}
+            >
+              {device ? "Actualizar" : "Crear Dispositivo"}
+            </Button>
+          )}
         </>
       }
     >
@@ -104,14 +152,15 @@ export function CreateDeviceModal({
               if (errors.name) setErrors({ ...errors, name: "" });
             }}
             placeholder="Ingrese el nombre del dispositivo"
+            disabled={isViewMode}
             className={
               errors.name
-                ? "border-mahogany_red focus:border-mahogany_red focus:ring-mahogany_red"
+                ? "border-destructive focus:border-destructive focus:ring-destructive"
                 : ""
             }
           />
           {errors.name && (
-            <p className="text-xs text-mahogany_red">{errors.name}</p>
+            <p className="text-xs text-destructive">{errors.name}</p>
           )}
         </div>
 
@@ -124,9 +173,10 @@ export function CreateDeviceModal({
               setFormData({ ...formData, type: e.target.value as DeviceType });
               if (errors.type) setErrors({ ...errors, type: "" });
             }}
+            disabled={isViewMode}
             className={`w-full px-3 py-2 rounded-md border bg-background text-sm ${
               errors.type
-                ? "border-mahogany_red focus:border-mahogany_red focus:ring-mahogany_red"
+                ? "border-destructive focus:border-destructive focus:ring-destructive"
                 : ""
             }`}
           >
@@ -137,7 +187,7 @@ export function CreateDeviceModal({
             ))}
           </select>
           {errors.type && (
-            <p className="text-xs text-mahogany_red">{errors.type}</p>
+            <p className="text-xs text-destructive">{errors.type}</p>
           )}
         </div>
 
@@ -150,6 +200,7 @@ export function CreateDeviceModal({
               setFormData({ ...formData, model: e.target.value })
             }
             placeholder="Ej: MacBook Pro 2023"
+            disabled={isViewMode}
           />
         </div>
 
@@ -162,6 +213,7 @@ export function CreateDeviceModal({
               setFormData({ ...formData, serialNumber: e.target.value })
             }
             placeholder="Ej: ABC123XYZ"
+            disabled={isViewMode}
           />
         </div>
 
@@ -170,12 +222,13 @@ export function CreateDeviceModal({
           <select
             id="status"
             value={formData.status}
-            onChange={(e) =>
+            onChange={(e) => {
               setFormData({
                 ...formData,
                 status: e.target.value as DeviceStatus,
-              })
-            }
+              });
+            }}
+            disabled={isViewMode}
             className="w-full px-3 py-2 rounded-md border bg-background text-sm"
           >
             {Object.entries(DEVICE_STATUS_LABELS).map(([value, label]) => (
