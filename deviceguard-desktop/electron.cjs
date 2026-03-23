@@ -8,16 +8,24 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 700,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false, // Permitir Node.js en React (solo para uso interno)
+      contextIsolation: false,
       webSecurity: false,
     },
     autoHideMenuBar: true,
     title: 'DeviceGuard Provisioner',
+    backgroundColor: '#032831',
+    show: false,
   });
 
-  // Si estamos en desarrollo, cargar de vite
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+  });
+
   const isDev = process.env.NODE_ENV === 'development';
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
