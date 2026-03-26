@@ -8,6 +8,7 @@ import Constants from "expo-constants";
 import { provisioningService } from "@/src/services/provisioning.service";
 import { useKioskMode } from "@/src/hooks/useKioskMode";
 import { useDeviceStateListener } from "@/src/hooks/useDeviceStateListener";
+import { COLORS } from "@/src/constants/theme.constant";
 
 const { height } = Dimensions.get("window");
 
@@ -52,7 +53,7 @@ export default function LinkingSuccessScreen() {
       } catch (e) {
         console.warn("[DG] Error checking initial blocked state:", e);}
     };
-    
+
     checkInitialBlockedState();
   }, [deviceId]);
 
@@ -100,7 +101,7 @@ export default function LinkingSuccessScreen() {
   return (
     <YStack
       flex={1}
-      backgroundColor="#000000"
+      backgroundColor={COLORS.background.base}
       paddingHorizontal="$5"
       justifyContent="center"
       alignItems="center"
@@ -112,9 +113,9 @@ export default function LinkingSuccessScreen() {
           width={110}
           height={110}
           borderRadius={14}
-          backgroundColor="#450A0A"
+          backgroundColor={COLORS.primary.dark}
           borderWidth={2}
-          borderColor="#7F1D1D"
+          borderColor={COLORS.primary.border}
           justifyContent="center"
           alignItems="center"
         >
@@ -122,7 +123,7 @@ export default function LinkingSuccessScreen() {
             width={80}
             height={80}
             borderRadius={10}
-            backgroundColor="#B91C1C"
+            backgroundColor={COLORS.primary.main}
             justifyContent="center"
             alignItems="center"
           >
@@ -136,14 +137,14 @@ export default function LinkingSuccessScreen() {
           </Text>
           <Text
             fontSize={14}
-            color="#9CA3AF"
+            color={COLORS.text.secondary}
             textAlign="center"
             maxWidth={300}
             lineHeight={20}
           >
             Bajo la protección de{" "}
             <Text fontWeight="700" color="white">
-              DeviceGuard
+              FinanciaTech
             </Text>
           </Text>
         </YStack>
@@ -153,15 +154,15 @@ export default function LinkingSuccessScreen() {
       <YStack
         width="100%"
         borderRadius={28}
-        backgroundColor="#0F172A"
+        backgroundColor={COLORS.background.elevated}
         borderWidth={1}
-        borderColor="#1E3A5F"
+        borderColor={COLORS.border.main}
         overflow="hidden"
       >
-        {/* Franja superior carmesí */}
-        <YStack height={5} backgroundColor="#B91C1C" />
+        {/* Franja superior */}
+        <YStack height={5} backgroundColor={COLORS.primary.main} />
 
-        <YStack paddingVertical="$7" paddingHorizontal="$7" gap="$6">
+        <YStack paddingVertical="$6" paddingHorizontal="$7" gap="$6">
           {/* ORGANIZACIÓN */}
           <YStack gap="$2">
             <XStack alignItems="center" gap="$2">
@@ -169,11 +170,11 @@ export default function LinkingSuccessScreen() {
                 width={3}
                 height={14}
                 borderRadius={2}
-                backgroundColor="#B91C1C"
+                backgroundColor={COLORS.primary.main}
               />
               <Text
                 fontSize={11}
-                color="#6B7280"
+                color={COLORS.text.tertiary}
                 letterSpacing={1.5}
                 fontWeight="600"
               >
@@ -191,7 +192,7 @@ export default function LinkingSuccessScreen() {
           </YStack>
 
           {/* Divisor */}
-          <YStack height={1} backgroundColor="#1E293B" />
+          <YStack height={1} backgroundColor={COLORS.border.subtle} />
 
           {/* DISPOSITIVO */}
           <YStack gap="$2">
@@ -200,11 +201,11 @@ export default function LinkingSuccessScreen() {
                 width={3}
                 height={14}
                 borderRadius={2}
-                backgroundColor="#B91C1C"
+                backgroundColor={COLORS.primary.main}
               />
               <Text
                 fontSize={11}
-                color="#6B7280"
+                color={COLORS.text.tertiary}
                 letterSpacing={1.5}
                 fontWeight="600"
               >
@@ -222,7 +223,7 @@ export default function LinkingSuccessScreen() {
           </YStack>
 
           {/* Divisor */}
-          <YStack height={1} backgroundColor="#1E293B" />
+          <YStack height={1} backgroundColor={COLORS.border.subtle} />
 
           {/* Estado */}
           <XStack alignItems="center" gap="$3">
@@ -230,9 +231,9 @@ export default function LinkingSuccessScreen() {
               width={10}
               height={10}
               borderRadius={5}
-              backgroundColor="#22C55E"
+              backgroundColor={COLORS.success.main}
             />
-            <Text fontSize={13} color="#22C55E" fontWeight="600">
+            <Text fontSize={13} color={COLORS.success.main} fontWeight="600">
               Monitoreo activo
             </Text>
           </XStack>
@@ -240,8 +241,8 @@ export default function LinkingSuccessScreen() {
       </YStack>
 
       {/* Footer */}
-      <Text fontSize={10} color="#374151" letterSpacing={1} textAlign="center">
-        DEVICEGUARD SECURITY PROTOCOL V4.6
+      <Text fontSize={10} color={COLORS.text.muted} letterSpacing={1} textAlign="center">
+        FINANCIATECH SECURITY PROTOCOL V4.6
       </Text>
     </YStack>
   );

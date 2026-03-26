@@ -15,8 +15,8 @@ async function createNotificationChannel() {
     try {
       const channel = await messaging().createChannel({
         id: 'default',
-        name: 'Notificaciones DeviceGuard',
-        description: 'Notificaciones importantes de DeviceGuard',
+        name: 'Notificaciones FinanciaTech',
+        description: 'Notificaciones importantes de FinanciaTech',
         sound: 'default',
         vibration: true,
         importance: 4,

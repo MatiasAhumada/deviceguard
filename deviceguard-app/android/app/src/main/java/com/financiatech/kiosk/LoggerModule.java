@@ -1,4 +1,4 @@
-package com.deviceguard.kiosk;
+package com.financiatech.kiosk;
 
 import android.util.Log;
 
@@ -11,7 +11,7 @@ import com.facebook.react.module.annotations.ReactModule;
 public class LoggerModule extends ReactContextBaseJavaModule {
 
     public static final String NAME = "LoggerModule";
-    private static final String TAG = "DeviceGuardJS";
+    private static final String TAG = "FinanciaTechJS";
 
     public LoggerModule(ReactApplicationContext reactContext) {
         super(reactContext);

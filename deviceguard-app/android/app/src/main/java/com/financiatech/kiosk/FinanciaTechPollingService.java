@@ -1,4 +1,4 @@
-package com.deviceguard.kiosk;
+package com.financiatech.kiosk;
 
 import android.app.ActivityManager;
 import android.app.AlarmManager;
@@ -47,10 +47,10 @@ import java.net.URL;
  *  - Usa AlarmManager para auto-reiniciarse en caso de ser detenido forzosamente
  *  - Emite eventos a React Native cuando el estado cambia
  */
-public class DeviceGuardPollingService extends Service {
+public class FinanciaTechPollingService extends Service {
 
-    private static final String TAG = "DGPollingService";
-    private static final String CHANNEL_ID = "deviceguard_polling";
+    private static final String TAG = "FTPollingService";
+    private static final String CHANNEL_ID = "financiatech_polling";
     private static final int NOTIFICATION_ID = 1001;
 
     private static final long POLL_INTERVAL_ACTIVE_MS = 30000;
@@ -59,7 +59,7 @@ public class DeviceGuardPollingService extends Service {
 
     private static final long RESTART_DELAY_MS = 2000;
 
-    static final String PREFS_NAME = "DeviceGuardPrefs";
+    static final String PREFS_NAME = "FinanciaTechPrefs";
     static final String KEY_DEVICE_ID = "deviceId";
     static final String KEY_API_URL = "apiUrl";
     static final String KEY_IS_LINKED = "isLinked";
@@ -154,7 +154,7 @@ public class DeviceGuardPollingService extends Service {
         }
         
         // Manejar fallback de desbloqueo
-        if ("com.deviceguard.kiosk.ACTION_UNLOCK_FALLBACK".equals(action)) {
+        if ("com.financiatech.kiosk.ACTION_UNLOCK_FALLBACK".equals(action)) {
             handleUnlockFallback();
             // Re-programar fallback
             scheduleUnlockFallback();
@@ -452,8 +452,8 @@ public class DeviceGuardPollingService extends Service {
     private void scheduleUnlockFallback() {
         if (alarmManager == null) return;
 
-        Intent intent = new Intent(this, DeviceGuardPollingService.class);
-        intent.setAction("com.deviceguard.kiosk.ACTION_UNLOCK_FALLBACK");
+        Intent intent = new Intent(this, FinanciaTechPollingService.class);
+        intent.setAction("com.financiatech.kiosk.ACTION_UNLOCK_FALLBACK");
         unlockFallbackPendingIntent = PendingIntent.getService(
             this,
             2,
@@ -537,7 +537,7 @@ public class DeviceGuardPollingService extends Service {
                 PowerManager.FULL_WAKE_LOCK |
                 PowerManager.ACQUIRE_CAUSES_WAKEUP |
                 PowerManager.ON_AFTER_RELEASE,
-                "DeviceGuard::LockWakeLock"
+                "FinanciaTech::LockWakeLock"
             );
             wl.acquire(10000); // 10 segundos
             Log.i(TAG, "Screen wake lock acquired");
@@ -546,9 +546,9 @@ public class DeviceGuardPollingService extends Service {
         // Esperar 500ms para que la pantalla despierte
         handler.postDelayed(() -> {
             // Abrir la app en la pantalla de bloqueo usando deep linking de Expo Router
-            // Usamos el esquema de URL registrado en el manifest: deviceguardapp://
+            // Usamos el esquema de URL registrado en el manifest: financiatechapp://
             Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
-                android.net.Uri.parse("deviceguardapp://device-blocked"));
+                android.net.Uri.parse("financiatechapp://device-blocked"));
             intent.addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK |
                 Intent.FLAG_ACTIVITY_CLEAR_TOP |
@@ -636,7 +636,7 @@ public class DeviceGuardPollingService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID,
-                    "DeviceGuard",
+                    "FinanciaTech",
                     NotificationManager.IMPORTANCE_MIN // sin sonido ni popup
             );
             channel.setDescription("Monitoreo de seguridad en segundo plano");
@@ -662,7 +662,7 @@ public class DeviceGuardPollingService extends Service {
         }
 
         return builder
-                .setContentTitle("DeviceGuard")
+                .setContentTitle("FinanciaTech")
                 .setContentText("Protección activa")
                 .setSmallIcon(android.R.drawable.ic_lock_lock)
                 .setContentIntent(pendingIntent)
@@ -676,7 +676,7 @@ public class DeviceGuardPollingService extends Service {
     // ─────────────────────────────────────────────────────────────────────
 
     public static void start(Context context) {
-        Intent intent = new Intent(context, DeviceGuardPollingService.class);
+        Intent intent = new Intent(context, FinanciaTechPollingService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent);
         } else {
@@ -686,7 +686,7 @@ public class DeviceGuardPollingService extends Service {
 
     public static void stop(Context context) {
         cancelWatchdog(context);
-        Intent intent = new Intent(context, DeviceGuardPollingService.class);
+        Intent intent = new Intent(context, FinanciaTechPollingService.class);
         intent.putExtra("intentional_stop", true);
         context.stopService(intent);
     }
@@ -707,8 +707,8 @@ public class DeviceGuardPollingService extends Service {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return;
 
-        Intent intent = new Intent(this, DeviceGuardPollingService.class);
-        intent.setAction("com.deviceguard.kiosk.ACTION_WATCHDOG");
+        Intent intent = new Intent(this, FinanciaTechPollingService.class);
+        intent.setAction("com.financiatech.kiosk.ACTION_WATCHDOG");
         PendingIntent pendingIntent = PendingIntent.getService(
             this,
             0,
@@ -742,8 +742,8 @@ public class DeviceGuardPollingService extends Service {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return;
 
-        Intent intent = new Intent(context, DeviceGuardPollingService.class);
-        intent.setAction("com.deviceguard.kiosk.ACTION_WATCHDOG");
+        Intent intent = new Intent(context, FinanciaTechPollingService.class);
+        intent.setAction("com.financiatech.kiosk.ACTION_WATCHDOG");
         PendingIntent pendingIntent = PendingIntent.getService(
             context,
             0,
@@ -761,8 +761,8 @@ public class DeviceGuardPollingService extends Service {
     private void cancelAllAlarms() {
         if (alarmManager == null) return;
 
-        Intent watchdogIntent = new Intent(this, DeviceGuardPollingService.class);
-        watchdogIntent.setAction("com.deviceguard.kiosk.ACTION_WATCHDOG");
+        Intent watchdogIntent = new Intent(this, FinanciaTechPollingService.class);
+        watchdogIntent.setAction("com.financiatech.kiosk.ACTION_WATCHDOG");
         PendingIntent watchdogPendingIntent = PendingIntent.getService(
             this,
             0,
@@ -771,7 +771,7 @@ public class DeviceGuardPollingService extends Service {
         );
         alarmManager.cancel(watchdogPendingIntent);
 
-        Intent restartIntent = new Intent(this, DeviceGuardPollingService.class);
+        Intent restartIntent = new Intent(this, FinanciaTechPollingService.class);
         PendingIntent restartPendingIntent = PendingIntent.getService(
             this,
             1,
@@ -795,7 +795,7 @@ public class DeviceGuardPollingService extends Service {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return;
 
-        Intent intent = new Intent(this, DeviceGuardPollingService.class);
+        Intent intent = new Intent(this, FinanciaTechPollingService.class);
         PendingIntent pendingIntent = PendingIntent.getService(
             this,
             1, // Different request code

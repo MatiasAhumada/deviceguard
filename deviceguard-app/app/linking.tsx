@@ -5,6 +5,7 @@ import { LinkingAnimation } from "@/components/linking/LinkingAnimation";
 import { LinkingStatus } from "@/components/linking/LinkingStatus";
 import { LinkingSteps } from "@/components/linking/LinkingSteps";
 import { NativeModules, Platform } from "react-native";
+import { COLORS } from "@/src/constants/theme.constant";
 
 export default function LinkingScreen() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function LinkingScreen() {
   return (
     <YStack
       flex={1}
-      backgroundColor="#000000"
+      backgroundColor={COLORS.background.base}
       justifyContent="center"
       alignItems="center"
       paddingHorizontal="$4"

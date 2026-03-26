@@ -1,4 +1,4 @@
-# DeviceGuard
+# FinanciaTech
 
 Sistema de gestión de dispositivos desarrollado con Next.js, Prisma y arquitectura monolítica.
 

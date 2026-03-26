@@ -34,8 +34,8 @@
     
     <!-- DeviceAdmin Receiver -->
     <receiver
-        android:name="com.deviceguard.kiosk.DeviceAdmin"
-        android:label="DeviceGuard Admin"
+        android:name="com.financiatech.kiosk.DeviceAdmin"
+        android:label="FinanciaTech Admin"
         android:permission="android.permission.BIND_DEVICE_ADMIN"
         android:exported="true"
         android:directBootAware="true">
@@ -52,10 +52,10 @@
             <action android:name="android.intent.action.USER_PRESENT" />
         </intent-filter>
     </receiver>
-    
+
     <!-- BootReceiver para auto-inicio confiable -->
     <receiver
-        android:name="com.deviceguard.kiosk.BootReceiver"
+        android:name="com.financiatech.kiosk.BootReceiver"
         android:enabled="true"
         android:exported="true"
         android:directBootAware="true">
@@ -66,24 +66,24 @@
             <action android:name="android.intent.action.QUICKBOOT_POWERON" />
         </intent-filter>
     </receiver>
-    
+
     <!-- ConnectivityWatchdog Service -->
     <service
         android:name=".ConnectivityWatchdog"
         android:enabled="true"
         android:exported="false" />
-    
-    <!-- DeviceGuardPollingService - Foreground Service para monitoreo -->
+
+    <!-- FinanciaTechPollingService - Foreground Service para monitoreo -->
     <service
-        android:name=".DeviceGuardPollingService"
+        android:name=".FinanciaTechPollingService"
         android:enabled="true"
         android:exported="false"
         android:foregroundServiceType="dataSync"
         android:stopWithTask="false" />
 
-    <!-- DeviceGuardFirebaseService - Firebase Cloud Messaging -->
+    <!-- FinanciaTechFirebaseService - Firebase Cloud Messaging -->
     <service
-        android:name=".DeviceGuardFirebaseService"
+        android:name=".FinanciaTechFirebaseService"
         android:enabled="true"
         android:exported="false">
         <intent-filter>
@@ -130,7 +130,7 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="deviceguardapp"/>
+        <data android:scheme="financiatechapp"/>
       </intent-filter>
     </activity>
   </application>

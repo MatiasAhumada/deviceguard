@@ -1,10 +1,11 @@
 import { XStack, YStack, Text, styled } from 'tamagui';
+import { COLORS } from '@/src/constants/theme.constant';
 
 const CodeBox = styled(YStack, {
   width: 44,
   height: 52,
   borderWidth: 2,
-  borderColor: '#DC2626',
+  borderColor: COLORS.primary.main,
   borderRadius: 8,
   justifyContent: 'center',
   alignItems: 'center',

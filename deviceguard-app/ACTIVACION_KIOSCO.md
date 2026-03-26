@@ -1,6 +1,6 @@
 # Guía de Activación: Modo Propietario (Device Owner) y Kiosco
 
-Para que **DeviceGuard** tenga control total del dispositivo, impida su desinstalación, inicie automáticamente tras reinicios y pueda bloquear completamente el equipo, la aplicación debe ser configurada como el **Propietario del Dispositivo (Device Owner)**.
+Para que **FinanciaTech** tenga control total del dispositivo, impida su desinstalación, inicie automáticamente tras reinicios y pueda bloquear completamente el equipo, la aplicación debe ser configurada como el **Propietario del Dispositivo (Device Owner)**.
 
 > ⚠️ **IMPORTANTE:** Android **solo permite** establecer un Device Owner si el dispositivo **no tiene ninguna cuenta asociada** (ej. cuentas de Google) configurada en el sistema. Debe hacerse preferentemente en un equipo recién reseteado de fábrica o después de eliminar todas las cuentas manualmente.
 
@@ -37,11 +37,11 @@ adb install -r "E:\DeviceGuard\deviceguard-app\android\app\build\outputs\apk\rel
 Este es el comando clave que eleva los privilegios de la aplicación al máximo nivel, permitiéndole ser inborrable e irremplazable:
 
 ```powershell
-adb shell dpm set-device-owner com.deviceguard.kiosk/.DeviceAdmin
+adb shell dpm set-device-owner com.financiatech.kiosk/.DeviceAdmin
 ```
 
 **Resultados posibles:**
-- ✅ `Success: Device owner set to package com.deviceguard.kiosk`: ¡Todo salió bien!
+- ✅ `Success: Device owner set to package com.financiatech.kiosk`: ¡Todo salió bien!
 - ❌ `Not allowed to set the device owner because there are already some accounts...`: Tienes cuentas o perfiles creados en el celular. Elimina las cuentas desde los Ajustes e inténtalo de nuevo.
 
 ## Paso 6: Verificación
@@ -50,12 +50,12 @@ Para confirmar que tu aplicación ahora es Device Owner de forma exitosa, ejecut
 ```powershell
 adb shell dpm list-owners
 ```
-*Deberías ver una salida indicando: `1 owner: User 0: admin=com.deviceguard.kiosk/.DeviceAdmin,DeviceOwner`*
+*Deberías ver una salida indicando: `1 owner: User 0: admin=com.financiatech.kiosk/.DeviceAdmin,DeviceOwner`*
 
----                                                                
+---
 
 ### ¿Qué logra esto?
-A partir de este momento, DeviceGuard tiene permisos de super-administrador de seguridad para:
+A partir de este momento, FinanciaTech tiene permisos de super-administrador de seguridad para:
 - Trabajar en **Lock Task Mode** (Kiosco duro).
 - Ocultar la barra de notificaciones y navegación.
 - Bloquear accesos del menú de apagado/reinicio.

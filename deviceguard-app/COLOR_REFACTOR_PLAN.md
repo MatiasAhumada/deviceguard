@@ -1,8 +1,8 @@
-# Plan de Refactor de Colores — DeviceGuard Mobile App
+# Plan de Refactor de Colores — FinanciaTech Mobile App
 
 ## Contexto del Proyecto
 
-DeviceGuard Mobile es una aplicación React Native + Expo que funciona como cliente de kiosk mode para dispositivos Android.
+FinanciaTech Mobile es una aplicación React Native + Expo que funciona como cliente de kiosk mode para dispositivos Android.
 
 **Stack técnico:**
 - **Framework**: React Native 0.81.5 + Expo SDK 54

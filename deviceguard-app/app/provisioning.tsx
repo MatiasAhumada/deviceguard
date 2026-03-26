@@ -9,6 +9,7 @@ import { useProvisioningCode } from "@/src/hooks/useProvisioningCode";
 import { useDeviceImei } from "@/src/hooks/useDeviceImei";
 import { provisioningService } from "@/src/services/provisioning.service";
 import { validateProvisioningCode } from "@/src/utils/validation.util";
+import { COLORS } from "@/src/constants/theme.constant";
 
 const { height } = Dimensions.get("window");
 
@@ -109,7 +110,7 @@ export default function ProvisioningScreen() {
       } catch (fcmError) {
         console.warn('[PROVISIONING] Error getting FCM token:', fcmError);
       }
-      
+
       const result = await provisioningService.syncDevice(fullCode, deviceId, fcmToken || undefined);
 
       // Navega a la pantalla de animación de vinculación pasando los datos
@@ -143,7 +144,7 @@ export default function ProvisioningScreen() {
   };
 
   return (
-    <YStack flex={1} backgroundColor="#000000">
+    <YStack flex={1} backgroundColor={COLORS.background.base}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <YStack flex={1} paddingTop={height * 0.08} gap="$6">
           <ProvisioningHeader />
@@ -152,18 +153,18 @@ export default function ProvisioningScreen() {
 
           {/* Mensaje de error inline (validación local) */}
           {errorMessage && (
-            <YStack backgroundColor="#450A0A" borderRadius={8} paddingHorizontal="$4" paddingVertical="$3">
-              <Text color="#FCA5A5" fontSize={13} textAlign="center">
+            <YStack backgroundColor={COLORS.primary.dark} borderRadius={8} paddingHorizontal="$4" paddingVertical="$3">
+              <Text color={COLORS.primary.light} fontSize={13} textAlign="center">
                 {errorMessage}
               </Text>
             </YStack>
           )}
 
           <Button
-            backgroundColor="#DC2626"
+            backgroundColor={COLORS.primary.main}
             borderRadius={10}
             width="100%"
-           
+
             alignSelf="center"
             onPress={handleVerify}
             disabled={!canVerify}

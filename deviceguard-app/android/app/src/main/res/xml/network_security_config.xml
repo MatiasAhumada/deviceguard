@@ -7,7 +7,7 @@
     </domain-config>
     <!-- Producción: HTTPS con certificado válido -->
     <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">deviceguard.matiasahumada.online</domain>
+        <domain includeSubdomains="true">financiatech.matiasahumada.online</domain>
         <trust-anchors>
             <certificates src="system"/>
         </trust-anchors>

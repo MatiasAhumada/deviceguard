@@ -91,21 +91,21 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.deviceguard.kiosk'
+    namespace 'com.financiatech.kiosk'
     defaultConfig {
-        applicationId 'com.deviceguard.kiosk'
+        applicationId 'com.financiatech.kiosk'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
-        
+
         // Inyectar variables de entorno en BuildConfig
-        buildConfigField "String", "API_URL", "\"${getEnvOrProp('EXPO_PUBLIC_API_URL', 'https://deviceguard.matiasahumada.online')}\""
-        
+        buildConfigField "String", "API_URL", "\"${getEnvOrProp('EXPO_PUBLIC_API_URL', 'https://financiatech.matiasahumada.online')}\""
+
         // Inyectar en recursos de Android para que React Native pueda leerlas
-        resValue "string", "expo_public_api_url", getEnvOrProp('EXPO_PUBLIC_API_URL', 'https://deviceguard.matiasahumada.online')
+        resValue "string", "expo_public_api_url", getEnvOrProp('EXPO_PUBLIC_API_URL', 'https://financiatech.matiasahumada.online')
     }
     signingConfigs {
         debug {

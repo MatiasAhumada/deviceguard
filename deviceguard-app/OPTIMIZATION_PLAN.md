@@ -1,9 +1,9 @@
-# 📱 DeviceGuard App - Plan de Optimización de Performance y Confiabilidad
+# 📱 FinanciaTech App - Plan de Optimización de Performance y Confiabilidad
 
 ## 🎯 Contexto y Arquitectura Actual
 
 ### Arquitectura de la App
-DeviceGuard App es una aplicación **React Native + Expo** con módulos nativos Android que funciona como:
+FinanciaTech App es una aplicación **React Native + Expo** con módulos nativos Android que funciona como:
 1. **Cliente de visualización** - Muestra estado del dispositivo (bloqueado/desbloqueado)
 2. **Kiosk mode** - Bloquea el dispositivo en modo cabina
 3. **Polling background** - Servicio nativo que consulta al servidor cada 30s
@@ -12,7 +12,7 @@ DeviceGuard App es una aplicación **React Native + Expo** con módulos nativos 
 ### Flujo Actual de Polling
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    DeviceGuardPollingService                     │
+│                    FinanciaTechPollingService                     │
 │                    (Android Native - Java)                       │
 │                                                                  │
 │  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐   │
@@ -26,7 +26,7 @@ DeviceGuard App es una aplicación **React Native + Expo** con módulos nativos 
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │  emitDeviceStateChanged(true) → React Native             │  │
 │  │  DeviceModule.startKioskMode()                           │  │
-│  │  Intent: deviceguardapp://device-blocked                 │  │
+│  │  Intent: financiatechapp://device-blocked                 │  │
 │  └──────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
          │
@@ -78,7 +78,7 @@ DeviceGuard App es una aplicación **React Native + Expo** con módulos nativos 
 **Problema**: Múltiples puntos activan/desactivan kiosk mode
 
 **Puntos críticos**:
-- `DeviceGuardPollingService.onDeviceUnblocked()` → navega a MainActivity
+- `FinanciaTechPollingService.onDeviceUnblocked()` → navega a MainActivity
 - `DeviceModule.stopKioskMode()` → para kiosk desde RN
 - `useDeviceStateListener` en `device-blocked.tsx` → escucha eventos
 
@@ -1114,4 +1114,4 @@ export default clientAxios;
 
 *Documento creado: Marzo 10, 2026*
 *Actualizado: Marzo 11, 2026 (FCM como canal principal)*
-*Basado en OPTIMIZATION_PLAN.md de deviceguard-web*
+*Basado en OPTIMIZATION_PLAN.md de financiatech-web*

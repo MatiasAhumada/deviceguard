@@ -1,4 +1,4 @@
-package com.deviceguard.kiosk;
+package com.financiatech.kiosk;
 
 import android.app.Service;
 import android.content.Context;
@@ -53,7 +53,7 @@ public class AppGuardianService extends Service {
                 PowerManager.FULL_WAKE_LOCK |
                 PowerManager.ACQUIRE_CAUSES_WAKEUP |
                 PowerManager.ON_AFTER_RELEASE,
-                "DeviceGuard::AppGuardianWakeLock"
+                "FinanciaTech::AppGuardianWakeLock"
             );
             wl.acquire(2000);
         }

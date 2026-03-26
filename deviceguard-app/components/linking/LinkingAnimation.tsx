@@ -3,6 +3,7 @@ import { YStack } from "tamagui";
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from "react-native-reanimated";
 import { View, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { COLORS } from "@/src/constants/theme.constant";
 
 interface RadarPoint {
   id: number;
@@ -90,7 +91,7 @@ export function LinkingAnimation() {
         <Animated.View style={[styles.sweepHand, sweepStyle]}>
           <View style={styles.sweepMask}>
             <LinearGradient
-              colors={["rgba(220, 38, 38, 0)", "rgba(220, 38, 38, 0.4)", "#DC2626"]}
+              colors={[`rgba(69, 131, 250, 0)`, `rgba(69, 131, 250, 0.4)`, COLORS.primary.main]}
               start={{ x: 0, y: 0.1 }}
               end={{ x: 1, y: 0.5 }}
               style={styles.sweepGradient}
@@ -105,8 +106,8 @@ export function LinkingAnimation() {
         width={12}
         height={12}
         borderRadius={6}
-        backgroundColor="#DC2626"
-        style={{ shadowColor: "#DC2626", shadowOpacity: 0.8, shadowRadius: 8 }}
+        backgroundColor={COLORS.primary.main}
+        style={{ shadowColor: COLORS.primary.main, shadowOpacity: 0.8, shadowRadius: 8 }}
       />
     </YStack>
   );
@@ -170,8 +171,8 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#10B981",
-    shadowColor: "#10B981",
+    backgroundColor: COLORS.success.main,
+    shadowColor: COLORS.success.main,
     shadowOpacity: 0.8,
     shadowRadius: 3,
   },
@@ -181,6 +182,6 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     borderWidth: 2,
-    borderColor: "rgba(220, 38, 38, 0.3)",
+    borderColor: `rgba(69, 131, 250, 0.3)`,
   },
 });

@@ -10,6 +10,7 @@ import { useDeviceImei } from "@/src/hooks/useDeviceImei";
 import { provisioningService } from "@/src/services/provisioning.service";
 import { useKioskMode } from "@/src/hooks/useKioskMode";
 import { useDeviceStateListener } from "@/src/hooks/useDeviceStateListener";
+import { COLORS } from "@/src/constants/theme.constant";
 
 export default function DeviceBlockedScreen() {
   const router = useRouter();
@@ -135,7 +136,7 @@ export default function DeviceBlockedScreen() {
   return (
     <YStack
       flex={1}
-      backgroundColor="#000000"
+      backgroundColor={COLORS.background.base}
       paddingHorizontal="$4"
       paddingTop="$10"
       justifyContent="space-between"
@@ -146,7 +147,7 @@ export default function DeviceBlockedScreen() {
           width={140}
           height={140}
           borderRadius={24}
-          backgroundColor="#450A0A"
+          backgroundColor={COLORS.primary.dark}
           justifyContent="center"
           alignItems="center"
         >
@@ -154,11 +155,11 @@ export default function DeviceBlockedScreen() {
             width={100}
             height={100}
             borderRadius={16}
-            backgroundColor="#1F2937"
+            backgroundColor={COLORS.background.container}
             justifyContent="center"
             alignItems="center"
           >
-            <FontAwesome name="lock" size={48} color="#DC2626" />
+            <FontAwesome name="lock" size={48} color={COLORS.primary.main} />
           </YStack>
         </YStack>
 
@@ -174,7 +175,7 @@ export default function DeviceBlockedScreen() {
           </Text>
           <Text
             fontSize={14}
-            color="#9CA3AF"
+            color={COLORS.text.secondary}
             textAlign="center"
             maxWidth={320}
             lineHeight={22}
@@ -188,13 +189,13 @@ export default function DeviceBlockedScreen() {
           width="100%"
           maxWidth={360}
           borderRadius={16}
-          backgroundColor="#1F2937"
+          backgroundColor={COLORS.background.container}
           paddingVertical="$5"
           paddingHorizontal="$6"
           gap="$3"
           alignItems="center"
         >
-          <Text fontSize={12} color="#9CA3AF" letterSpacing={1}>
+          <Text fontSize={12} color={COLORS.text.secondary} letterSpacing={1}>
             SALDO PENDIENTE
           </Text>
           <Text fontSize={48} color="white" fontWeight="800">
@@ -207,13 +208,13 @@ export default function DeviceBlockedScreen() {
               width={16}
               height={16}
               borderRadius={8}
-              backgroundColor="#374151"
+              backgroundColor={COLORS.background.interactive}
               justifyContent="center"
               alignItems="center"
             >
-              <FontAwesome name="info" size={10} color="#9CA3AF" />
+              <FontAwesome name="info" size={10} color={COLORS.text.secondary} />
             </YStack>
-            <Text fontSize={12} color="#6B7280">
+            <Text fontSize={12} color={COLORS.text.tertiary}>
               Funcionalidad limitada a llamadas de emergencia.
             </Text>
           </YStack>
@@ -222,7 +223,7 @@ export default function DeviceBlockedScreen() {
 
       <YStack width="100%" maxWidth={360} marginBottom="$8" gap="$4">
         <Button
-          backgroundColor="#DC2626"
+          backgroundColor={COLORS.primary.main}
           borderRadius={12}
           height={56}
           onPress={handlePayment}
@@ -243,11 +244,11 @@ export default function DeviceBlockedScreen() {
 
         <Text
           fontSize={10}
-          color="#4B5563"
+          color={COLORS.text.muted}
           textAlign="center"
           letterSpacing={0.5}
         >
-          ID: DG-8X99-BLOQ-V2
+          ID: FT-8X99-BLOQ-V2
         </Text>
       </YStack>
     </YStack>

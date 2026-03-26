@@ -1,4 +1,4 @@
-package com.deviceguard.kiosk;
+package com.financiatech.kiosk;
 
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
@@ -21,7 +21,7 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 @ReactModule(name = DeviceModule.NAME)
 public class DeviceModule extends ReactContextBaseJavaModule {
 
-    private static final String TAG = "DeviceGuardModule";
+    private static final String TAG = "FinanciaTechModule";
     public static final String NAME = "DeviceModule";
     
     // Evento para notificar cambios de estado a React Native
@@ -108,11 +108,11 @@ public class DeviceModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void initPollingService(String imei, String apiUrl, Promise promise) {
         try {
-            reactContext.getSharedPreferences(DeviceGuardPollingService.PREFS_NAME, Context.MODE_PRIVATE)
+            reactContext.getSharedPreferences(FinanciaTechPollingService.PREFS_NAME, Context.MODE_PRIVATE)
                 .edit()
-                .putString(DeviceGuardPollingService.KEY_DEVICE_ID, imei)
-                .putString(DeviceGuardPollingService.KEY_API_URL, apiUrl)
-                .putBoolean(DeviceGuardPollingService.KEY_IS_LINKED, true)
+                .putString(FinanciaTechPollingService.KEY_DEVICE_ID, imei)
+                .putString(FinanciaTechPollingService.KEY_API_URL, apiUrl)
+                .putBoolean(FinanciaTechPollingService.KEY_IS_LINKED, true)
                 .apply();
 
             if (devicePolicyManager.isDeviceOwnerApp(reactContext.getPackageName())) {
@@ -121,7 +121,7 @@ public class DeviceModule extends ReactContextBaseJavaModule {
                 Log.i(TAG, "Provisioning restrictions applied after linking");
             }
 
-            DeviceGuardPollingService.start(reactContext);
+            FinanciaTechPollingService.start(reactContext);
             Log.i(TAG, "Polling service initialized — IMEI=" + imei);
             promise.resolve("Polling service started");
         } catch (Exception e) {
@@ -153,7 +153,7 @@ public class DeviceModule extends ReactContextBaseJavaModule {
             } else if (devicePolicyManager.isAdminActive(deviceAdmin)) {
                 activity.startLockTask();
             }
-            getReactApplicationContext().getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE)
+            getReactApplicationContext().getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE)
                 .edit()
                 .putBoolean("isLocked", true)
                 .putBoolean("isFullLockdownActive", true)
@@ -179,7 +179,7 @@ public class DeviceModule extends ReactContextBaseJavaModule {
                 }
             }
         }
-        getReactApplicationContext().getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE)
+        getReactApplicationContext().getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE)
             .edit()
             .putBoolean("isLocked", false)
             .putBoolean("isFullLockdownActive", false)
@@ -220,7 +220,7 @@ public class DeviceModule extends ReactContextBaseJavaModule {
             Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
             intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, deviceAdmin);
             intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, 
-                "DeviceGuard requiere permisos de administrador para garantizar el pago");
+                "FinanciaTech requiere permisos de administrador para garantizar el pago");
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             
             getReactApplicationContext().startActivity(intent);
@@ -318,7 +318,7 @@ public class DeviceModule extends ReactContextBaseJavaModule {
             activity.startLockTask();
             
             // Guardar estado
-            reactContext.getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE)
+            reactContext.getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE)
                 .edit()
                 .putBoolean("isFullLockdownActive", true)
                 .apply();
@@ -347,7 +347,7 @@ public class DeviceModule extends ReactContextBaseJavaModule {
                 removeFullRestrictions();
             }
             
-            reactContext.getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE)
+            reactContext.getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE)
                 .edit()
                 .putBoolean("isFullLockdownActive", false)
                 .apply();

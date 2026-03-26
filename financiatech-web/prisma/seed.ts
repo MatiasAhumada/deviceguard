@@ -7,11 +7,11 @@ async function main() {
   const hashedPassword = await bcrypt.hash("admin123", 10);
 
   const superAdminUser = await prisma.user.upsert({
-    where: { email: "superadmin@deviceguard.com" },
+    where: { email: "superadmin@financiatech.com" },
     update: {},
     create: {
       name: "Super Admin",
-      email: "superadmin@deviceguard.com",
+      email: "superadmin@financiatech.com",
       password: hashedPassword,
       role: UserRole.SUPER_ADMIN,
     },
@@ -27,11 +27,11 @@ async function main() {
 
   // ========== ADMIN VINCULADO ==========
   const adminUser = await prisma.user.upsert({
-    where: { email: "admin@deviceguard.com" },
+    where: { email: "admin@financiatech.com" },
     update: {},
     create: {
       name: "Organización Admin",
-      email: "admin@deviceguard.com",
+      email: "admin@financiatech.com",
       password: hashedPassword, // Usamos la misma clave "admin123" para simplificar
       role: UserRole.ADMIN,
     },
@@ -49,11 +49,11 @@ async function main() {
   console.log("Seed completed successfully");
   console.log("----------------------------");
   console.log("Super Admin creado:");
-  console.log("Email: superadmin@deviceguard.com");
+  console.log("Email: superadmin@financiatech.com");
   console.log("Password: admin123");
   console.log("----------------------------");
   console.log("Admin (Organización) creado:");
-  console.log("Email: admin@deviceguard.com");
+  console.log("Email: admin@financiatech.com");
   console.log("Password: admin123");
 }
 

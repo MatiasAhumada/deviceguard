@@ -1,4 +1,4 @@
-package com.deviceguard.kiosk;
+package com.financiatech.kiosk;
 
 import android.app.Service;
 import android.content.Intent;
@@ -11,7 +11,7 @@ import android.content.SharedPreferences;
 
 public class ConnectivityWatchdog extends Service {
     
-    private static final String PREFS_NAME = "DeviceGuardPrefs";
+    private static final String PREFS_NAME = "FinanciaTechPrefs";
     private static final String KEY_UNLOCK_CODE = "unlockCode";
     private static final long CHECK_INTERVAL = 30000;
     

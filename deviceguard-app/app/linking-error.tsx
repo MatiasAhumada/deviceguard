@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { YStack, Text, Button } from "tamagui";
+import { COLORS } from "@/src/constants/theme.constant";
 
 export default function LinkingErrorScreen() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function LinkingErrorScreen() {
   return (
     <YStack
       flex={1}
-      backgroundColor="#000000"
+      backgroundColor={COLORS.background.base}
       paddingHorizontal="$4"
       paddingTop="$10"
       justifyContent="space-between"
@@ -25,7 +26,7 @@ export default function LinkingErrorScreen() {
           width={120}
           height={120}
           borderRadius={32}
-          backgroundColor="#450A0A"
+          backgroundColor={COLORS.primary.dark}
           justifyContent="center"
           alignItems="center"
         >
@@ -33,7 +34,7 @@ export default function LinkingErrorScreen() {
             width={80}
             height={80}
             borderRadius={24}
-            backgroundColor="#DC2626"
+            backgroundColor={COLORS.primary.main}
             justifyContent="center"
             alignItems="center"
           >
@@ -54,7 +55,7 @@ export default function LinkingErrorScreen() {
           </Text>
           <Text
             fontSize={14}
-            color="#9CA3AF"
+            color={COLORS.text.secondary}
             textAlign="center"
             maxWidth={320}
           >
@@ -66,7 +67,7 @@ export default function LinkingErrorScreen() {
 
       <YStack width="100%" maxWidth={360} marginBottom="$8" gap="$3">
         <Button
-          backgroundColor="#DC2626"
+          backgroundColor={COLORS.primary.main}
           borderRadius={12}
           height={56}
           onPress={handleRetry}
@@ -84,7 +85,7 @@ export default function LinkingErrorScreen() {
 
         <Text
           fontSize={12}
-          color="#6B7280"
+          color={COLORS.text.tertiary}
           textAlign="center"
           paddingHorizontal="$4"
         >

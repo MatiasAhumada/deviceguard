@@ -1,4 +1,4 @@
-package com.deviceguard.kiosk
+package com.financiatech.kiosk
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.app.ActivityManager
@@ -29,7 +29,7 @@ class MainActivity : ReactActivity() {
     SplashScreenManager.registerOnActivity(this)
     super.onCreate(null)
 
-    prefs = getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE)
+    prefs = getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE)
 
     // Asegurar que la app pueda encender la pantalla y mostrarse sobre el bloqueo
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
@@ -268,7 +268,7 @@ class MainActivity : ReactActivity() {
       am.isInLockTaskMode
     } else {
       // Fallback para API < 23 (muy improbable en dispositivos modernos)
-      val prefs = getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE)
+      val prefs = getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE)
       prefs.getBoolean("isFullLockdownActive", false)
     }
   }

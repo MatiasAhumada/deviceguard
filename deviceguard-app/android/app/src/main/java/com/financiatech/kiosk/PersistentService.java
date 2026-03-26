@@ -1,4 +1,4 @@
-package com.deviceguard.kiosk;
+package com.financiatech.kiosk;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -14,7 +14,7 @@ import android.os.PowerManager;
 import android.util.Log;
 
 /**
- * Servicio de persistencia que asegura que DeviceGuardPollingService siempre esté corriendo.
+ * Servicio de persistencia que asegura que FinanciaTechPollingService siempre esté corriendo.
  * 
  * Este servicio actúa como un "guardián" que monitorea el estado del polling service
  * y lo reinicia si se detiene por cualquier razón. Usa múltiples mecanismos:
@@ -58,7 +58,7 @@ public class PersistentService extends Service {
             intentionalStop = true;
         }
 
-        SharedPreferences prefs = getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE);
         boolean isLinked = prefs.getBoolean("isLinked", false);
 
         if (!isLinked) {
@@ -106,7 +106,7 @@ public class PersistentService extends Service {
     public void onTaskRemoved(Intent rootIntent) {
         Log.w(TAG, "Task removed. Restarting PersistentService and app...");
 
-        SharedPreferences prefs = getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE);
         boolean isLocked = prefs.getBoolean("isLocked", false);
         boolean isLinked = prefs.getBoolean("isLinked", false);
 
@@ -118,7 +118,7 @@ public class PersistentService extends Service {
                 PowerManager.FULL_WAKE_LOCK |
                 PowerManager.ACQUIRE_CAUSES_WAKEUP |
                 PowerManager.ON_AFTER_RELEASE,
-                "DeviceGuard::TaskRemovedWakeLock"
+                "FinanciaTech::TaskRemovedWakeLock"
             );
             wl.acquire(3000);
         }
@@ -147,10 +147,10 @@ public class PersistentService extends Service {
     }
 
     /**
-     * Verifica que DeviceGuardPollingService esté corriendo y lo inicia si no.
+     * Verifica que FinanciaTechPollingService esté corriendo y lo inicia si no.
      */
     private void ensurePollingServiceRunning() {
-        SharedPreferences prefs = getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE);
         boolean isLinked = prefs.getBoolean("isLinked", false);
         
         if (!isLinked) {
@@ -158,9 +158,9 @@ public class PersistentService extends Service {
             return;
         }
         
-        if (!DeviceGuardPollingService.isRunning()) {
+        if (!FinanciaTechPollingService.isRunning()) {
             Log.w(TAG, "PollingService not running. Starting it now...");
-            DeviceGuardPollingService.start(this);
+            FinanciaTechPollingService.start(this);
         } else {
             Log.d(TAG, "PollingService is running");
         }
@@ -186,7 +186,7 @@ public class PersistentService extends Service {
             if (pm != null) {
                 wakeLock = pm.newWakeLock(
                     PowerManager.PARTIAL_WAKE_LOCK,
-                    "DeviceGuard::PersistentWakeLock"
+                    "FinanciaTech::PersistentWakeLock"
                 );
                 wakeLock.setReferenceCounted(false);
                 wakeLock.acquire(10 * 60 * 1000L); // 10 minutos máximo

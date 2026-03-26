@@ -1,4 +1,4 @@
-package com.deviceguard.kiosk;
+package com.financiatech.kiosk;
 
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
@@ -14,7 +14,7 @@ import android.util.Log;
  * BroadcastReceiver que asegura el arranque automático de la app y sus servicios
  * después de cada reinicio del dispositivo.
  * 
- * Este receiver es crítico para garantizar que DeviceGuard siempre se ejecute
+ * Este receiver es crítico para garantizar que FinanciaTech siempre se ejecute
  * al iniciar el equipo, permitiendo la conexión con el servidor y el bloqueo
  * remoto incluso si el cliente nunca abre la app manualmente.
  */
@@ -34,7 +34,7 @@ public class BootReceiver extends BroadcastReceiver {
             Intent.ACTION_USER_PRESENT.equals(action) ||
             "android.intent.action.QUICKBOOT_POWERON".equals(action)) {
             
-            Log.i(TAG, "Initiating DeviceGuard startup sequence...");
+            Log.i(TAG, "Initiating FinanciaTech startup sequence...");
             
             // SIEMPRE iniciar el servicio guardián que reabre la app
             try {
@@ -44,7 +44,7 @@ public class BootReceiver extends BroadcastReceiver {
                 Log.e(TAG, "Failed to start AppGuardianService: " + e.getMessage());
             }
             
-            SharedPreferences prefs = context.getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE);
+            SharedPreferences prefs = context.getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE);
             boolean isLinked = prefs.getBoolean("isLinked", false);
             
             // SIEMPRE lanzar la app al iniciar el dispositivo
@@ -83,7 +83,7 @@ public class BootReceiver extends BroadcastReceiver {
 
             // 2. Iniciar el servicio de polling
             try {
-                DeviceGuardPollingService.start(context);
+                FinanciaTechPollingService.start(context);
                 Log.i(TAG, "Polling service started successfully");
             } catch (Exception e) {
                 Log.e(TAG, "Failed to start polling service: " + e.getMessage());
@@ -103,7 +103,7 @@ public class BootReceiver extends BroadcastReceiver {
         Handler handler = new Handler(Looper.getMainLooper());
         handler.postDelayed(() -> {
             try {
-                SharedPreferences prefs = context.getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE);
+                SharedPreferences prefs = context.getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE);
                 boolean isLinked = prefs.getBoolean("isLinked", false);
                 
                 if (!isLinked) {
@@ -112,12 +112,12 @@ public class BootReceiver extends BroadcastReceiver {
                 }
                 
                 // Verificar si el servicio sigue corriendo
-                boolean isServiceRunning = isServiceRunning(context, DeviceGuardPollingService.class);
+                boolean isServiceRunning = isServiceRunning(context, FinanciaTechPollingService.class);
                 boolean isPersistentRunning = isServiceRunning(context, PersistentService.class);
                 
                 if (!isServiceRunning) {
                     Log.w(TAG, "PollingService not running after boot, restarting...");
-                    DeviceGuardPollingService.start(context);
+                    FinanciaTechPollingService.start(context);
                 }
                 
                 if (!isPersistentRunning) {

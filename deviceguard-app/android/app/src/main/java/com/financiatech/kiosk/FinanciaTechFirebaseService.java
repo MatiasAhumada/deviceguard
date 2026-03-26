@@ -1,4 +1,4 @@
-package com.deviceguard.kiosk;
+package com.financiatech.kiosk;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -20,9 +20,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 
-public class DeviceGuardFirebaseService extends FirebaseMessagingService {
+public class FinanciaTechFirebaseService extends FirebaseMessagingService {
 
-    private static final String TAG = "DGFirebaseService";
+    private static final String TAG = "FTFirebaseService";
     private static final String KEY_TYPE = "type";
     private static final String KEY_DEVICE_ID = "deviceId";
     private static final String KEY_IMEI = "imei";
@@ -59,16 +59,16 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
         Log.i(TAG, "FCM: Device blocked signal received for IMEI: " + imei);
 
         SharedPreferences prefs = getSharedPreferences(
-            DeviceGuardPollingService.PREFS_NAME,
+            FinanciaTechPollingService.PREFS_NAME,
             Context.MODE_PRIVATE
         );
 
-        String myImei = prefs.getString(DeviceGuardPollingService.KEY_DEVICE_ID, null);
+        String myImei = prefs.getString(FinanciaTechPollingService.KEY_DEVICE_ID, null);
 
         if (imei != null && imei.equals(myImei)) {
             prefs.edit()
-                 .putBoolean(DeviceGuardPollingService.KEY_IS_LOCKED, true)
-                 .putBoolean(DeviceGuardPollingService.KEY_LOCKDOWN_ACTIVE, true)
+                 .putBoolean(FinanciaTechPollingService.KEY_IS_LOCKED, true)
+                 .putBoolean(FinanciaTechPollingService.KEY_LOCKDOWN_ACTIVE, true)
                  .apply();
 
             DeviceModule.emitDeviceStateChanged(
@@ -85,16 +85,16 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
         Log.i(TAG, "FCM: Device unblocked signal received for IMEI: " + imei);
 
         SharedPreferences prefs = getSharedPreferences(
-            DeviceGuardPollingService.PREFS_NAME,
+            FinanciaTechPollingService.PREFS_NAME,
             Context.MODE_PRIVATE
         );
 
-        String myImei = prefs.getString(DeviceGuardPollingService.KEY_DEVICE_ID, null);
+        String myImei = prefs.getString(FinanciaTechPollingService.KEY_DEVICE_ID, null);
 
         if (imei != null && imei.equals(myImei)) {
             prefs.edit()
-                 .putBoolean(DeviceGuardPollingService.KEY_IS_LOCKED, false)
-                 .putBoolean(DeviceGuardPollingService.KEY_LOCKDOWN_ACTIVE, false)
+                 .putBoolean(FinanciaTechPollingService.KEY_IS_LOCKED, false)
+                 .putBoolean(FinanciaTechPollingService.KEY_LOCKDOWN_ACTIVE, false)
                  .apply();
 
             deactivateKioskMode();
@@ -107,9 +107,9 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
 
     private void sendAckToBackend(String deviceId, String type, String timestamp) {
         String apiUrl = getSharedPreferences(
-            DeviceGuardPollingService.PREFS_NAME,
+            FinanciaTechPollingService.PREFS_NAME,
             Context.MODE_PRIVATE
-        ).getString(DeviceGuardPollingService.KEY_API_URL, null);
+        ).getString(FinanciaTechPollingService.KEY_API_URL, null);
 
         if (apiUrl == null || deviceId == null) {
             return;
@@ -171,7 +171,7 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
                 PowerManager.SCREEN_BRIGHT_WAKE_LOCK |
                 PowerManager.FULL_WAKE_LOCK |
                 PowerManager.ACQUIRE_CAUSES_WAKEUP,
-                "DeviceGuard::BlockWakeLock"
+                "FinanciaTech::BlockWakeLock"
             );
             wl.acquire(10000);
         }
@@ -198,7 +198,7 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
 
     private void navigateToBlockedScreen() {
         Intent intent = new Intent(Intent.ACTION_VIEW,
-            Uri.parse("deviceguardapp://device-blocked"));
+            Uri.parse("financiatechapp://device-blocked"));
         intent.addFlags(
             Intent.FLAG_ACTIVITY_NEW_TASK |
             Intent.FLAG_ACTIVITY_CLEAR_TOP |
@@ -209,10 +209,10 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
 
     private void fetchDeviceDataAndNavigate(String imei) {
         SharedPreferences prefs = getSharedPreferences(
-            DeviceGuardPollingService.PREFS_NAME,
+            FinanciaTechPollingService.PREFS_NAME,
             Context.MODE_PRIVATE
         );
-        String apiUrl = prefs.getString(DeviceGuardPollingService.KEY_API_URL, null);
+        String apiUrl = prefs.getString(FinanciaTechPollingService.KEY_API_URL, null);
 
         if (apiUrl == null) {
             Log.e(TAG, "API URL not found, cannot fetch device data");
@@ -281,7 +281,7 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
     }
 
     private void navigateToUnblockedScreen(String deviceName, String adminName, String deviceId) {
-        SharedPreferences prefs = getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE);
         prefs.edit()
              .putBoolean("isLinked", true)
              .putBoolean("isLocked", false)
@@ -289,14 +289,14 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
              .apply();
 
         Log.i(TAG, "Navigating to linking-success with device data");
-        
+
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (pm != null) {
             @SuppressWarnings("deprecation")
             PowerManager.WakeLock wl = pm.newWakeLock(
                 PowerManager.FULL_WAKE_LOCK |
                 PowerManager.ACQUIRE_CAUSES_WAKEUP,
-                "DeviceGuard::UnblockWakeLock"
+                "FinanciaTech::UnblockWakeLock"
             );
             wl.acquire(3000);
         }
@@ -305,9 +305,9 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
             String encodedDeviceName = java.net.URLEncoder.encode(deviceName, "UTF-8");
             String encodedAdminName = java.net.URLEncoder.encode(adminName, "UTF-8");
             String encodedDeviceId = java.net.URLEncoder.encode(deviceId, "UTF-8");
-            
+
             String deepLink = String.format(
-                "deviceguardapp://linking-success?unlocked=true&deviceName=%s&adminName=%s&deviceId=%s",
+                "financiatechapp://linking-success?unlocked=true&deviceName=%s&adminName=%s&deviceId=%s",
                 encodedDeviceName,
                 encodedAdminName,
                 encodedDeviceId
@@ -327,8 +327,8 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
 
     private void navigateToUnblockedScreenFallback() {
         Log.w(TAG, "Using fallback navigation without device data");
-        
-        SharedPreferences prefs = getSharedPreferences("DeviceGuardPrefs", Context.MODE_PRIVATE);
+
+        SharedPreferences prefs = getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE);
         prefs.edit()
              .putBoolean("isLinked", true)
              .putBoolean("isLocked", false)
@@ -371,7 +371,7 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
     }
 
     private void sendTokenToBackend(String token) {
-        String imei = getSharedPreferences("DeviceGuardPrefs", MODE_PRIVATE)
+        String imei = getSharedPreferences("FinanciaTechPrefs", MODE_PRIVATE)
             .getString("deviceId", null);
 
         if (imei == null) {
@@ -379,7 +379,7 @@ public class DeviceGuardFirebaseService extends FirebaseMessagingService {
         }
 
         try {
-            String apiUrl = getSharedPreferences("DeviceGuardPrefs", MODE_PRIVATE)
+            String apiUrl = getSharedPreferences("FinanciaTechPrefs", MODE_PRIVATE)
                 .getString("apiUrl", null);
 
             if (apiUrl == null) {

@@ -1,4 +1,4 @@
-package com.deviceguard.kiosk;
+package com.financiatech.kiosk;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;

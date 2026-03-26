@@ -12,12 +12,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   return {
     ...config,
-    name: "deviceguard-app",
-    slug: "deviceguard-app",
+    name: "financiatech-app",
+    slug: "financiatech-app",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
-    scheme: "deviceguardapp",
+    scheme: "financiatechapp",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     splash: {
@@ -27,7 +27,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.deviceguard.kiosk",
+      bundleIdentifier: "com.financiatech.kiosk",
       googleServicesFile: "./GoogleService-Info.plist",
     },
     android: {
@@ -37,7 +37,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
-      package: "com.deviceguard.kiosk",
+      package: "com.financiatech.kiosk",
       googleServicesFile: "./google-services.json",
       permissions: ["android.permission.POST_NOTIFICATIONS"],
     },

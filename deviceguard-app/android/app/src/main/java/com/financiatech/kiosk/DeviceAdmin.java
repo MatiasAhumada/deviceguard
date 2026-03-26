@@ -1,4 +1,4 @@
-package com.deviceguard.kiosk;
+package com.financiatech.kiosk;
 
 import android.app.ActivityManager;
 import android.app.admin.DeviceAdminReceiver;
@@ -14,7 +14,7 @@ import android.util.Log;
 public class DeviceAdmin extends DeviceAdminReceiver {
 
     private static final String TAG = "DeviceAdmin";
-    private static final String PREFS_NAME = "DeviceGuardPrefs";
+    private static final String PREFS_NAME = "FinanciaTechPrefs";
 
     @Override
     public void onEnabled(Context context, Intent intent) {
@@ -36,7 +36,7 @@ public class DeviceAdmin extends DeviceAdminReceiver {
         DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
         ComponentName adminComponent = new ComponentName(context, DeviceAdmin.class);
 
-        if ("com.deviceguard.kiosk.FORCE_RESTRICTIONS".equals(action)) {
+        if ("com.financiatech.kiosk.FORCE_RESTRICTIONS".equals(action)) {
             if (dpm.isDeviceOwnerApp(context.getPackageName())) {
                 applyFullRestrictions(dpm, adminComponent);
                 Log.i(TAG, "Forced full restrictions via Intent!");
@@ -54,8 +54,8 @@ public class DeviceAdmin extends DeviceAdminReceiver {
             }
 
             SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-            boolean isLinked = prefs.getBoolean(DeviceGuardPollingService.KEY_IS_LINKED, false);
-            boolean isLocked = prefs.getBoolean(DeviceGuardPollingService.KEY_IS_LOCKED, false);
+            boolean isLinked = prefs.getBoolean(FinanciaTechPollingService.KEY_IS_LINKED, false);
+            boolean isLocked = prefs.getBoolean(FinanciaTechPollingService.KEY_IS_LOCKED, false);
 
             Log.i(TAG, "Boot received — isLinked=" + isLinked + " isLocked=" + isLocked);
 
@@ -78,7 +78,7 @@ public class DeviceAdmin extends DeviceAdminReceiver {
             }
 
             if (isLinked) {
-                DeviceGuardPollingService.start(context);
+                FinanciaTechPollingService.start(context);
                 launchApp(context);
             } else if (dpm.isDeviceOwnerApp(context.getPackageName())) {
                 Log.i(TAG, "Device Owner active but not linked yet. Launching app to provision.");
