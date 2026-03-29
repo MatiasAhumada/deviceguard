@@ -1,0 +1,98 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { YStack, Text, Button } from "tamagui";
+import { COLORS } from "@/src/constants/theme.constant";
+
+export default function LinkingErrorScreen() {
+  const router = useRouter();
+  // Recibe el mensaje de error enviado desde provisioning.tsx
+  const { message } = useLocalSearchParams<{ message?: string }>();
+
+  const handleRetry = () => {
+    // Vuelve a la pantalla de ingreso de código para reintentar
+    router.replace("/provisioning");
+  };
+
+  return (
+    <YStack
+      flex={1}
+      backgroundColor={COLORS.background.base}
+      paddingHorizontal="$4"
+      paddingTop="$10"
+      justifyContent="space-between"
+      alignItems="center"
+    >
+      <YStack alignItems="center" gap="$4" marginTop="$6">
+        <YStack
+          width={120}
+          height={120}
+          borderRadius={32}
+          backgroundColor={COLORS.primary.dark}
+          justifyContent="center"
+          alignItems="center"
+        >
+          <YStack
+            width={80}
+            height={80}
+            borderRadius={24}
+            backgroundColor={COLORS.primary.main}
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Text fontSize={40} color="white">
+              !
+            </Text>
+          </YStack>
+        </YStack>
+
+        <YStack gap="$2" alignItems="center" paddingHorizontal="$3">
+          <Text
+            fontSize={24}
+            fontWeight="800"
+            color="white"
+            textAlign="center"
+          >
+            No se pudo vincular
+          </Text>
+          <Text
+            fontSize={14}
+            color={COLORS.text.secondary}
+            textAlign="center"
+            maxWidth={320}
+          >
+            {message ||
+              "Hubo un problema al intentar vincular este dispositivo. Revisa tu conexión o el código de activación e inténtalo nuevamente."}
+          </Text>
+        </YStack>
+      </YStack>
+
+      <YStack width="100%" maxWidth={360} marginBottom="$8" gap="$3">
+        <Button
+          backgroundColor={COLORS.primary.main}
+          borderRadius={12}
+          height={56}
+          onPress={handleRetry}
+          pressStyle={{ opacity: 0.85 }}
+        >
+          <Text
+            color="white"
+            fontSize={17}
+            fontWeight="800"
+            textAlign="center"
+          >
+            Reintentar vinculación
+          </Text>
+        </Button>
+
+        <Text
+          fontSize={12}
+          color={COLORS.text.tertiary}
+          textAlign="center"
+          paddingHorizontal="$4"
+        >
+          Si el problema persiste, contacta al administrador de tu
+          organización.
+        </Text>
+      </YStack>
+    </YStack>
+  );
+}

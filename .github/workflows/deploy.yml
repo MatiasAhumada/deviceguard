@@ -19,7 +19,7 @@ jobs:
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-            cd deviceguard/deviceguard-web
+            cd financiatech/financiatech-web
             git fetch origin main
             git reset --hard origin/main
             git clean -fd -e .env -e storage
@@ -29,6 +29,6 @@ jobs:
             pnpm store prune
             pnpm migrate:deploy
             pnpm build || exit 1
-            pm2 restart deviceguard-web || pm2 start "pnpm start" --name deviceguard-web
+            pm2 restart financiatech-web || pm2 start "pnpm start" --name financiatech-web
             npm cache clean --force
             pnpm store prune
