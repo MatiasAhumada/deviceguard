@@ -124,7 +124,7 @@ useEffect(() => {
 
 #### 1A. Backend - Servicio FCM
 
-**Archivo**: `src/lib/fcm.ts` (deviceguard-web)
+**Archivo**: `src/lib/fcm.ts` (financiatech-web)
 
 ```typescript
 import admin from 'firebase-admin';
@@ -166,7 +166,7 @@ export const fcmService = {
 
 #### 1B. Backend - Endpoints REST para Control
 
-**Archivo**: `src/app/api/devices/[id]/status/route.ts` (deviceguard-web)
+**Archivo**: `src/app/api/devices/[id]/status/route.ts` (financiatech-web)
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
@@ -261,7 +261,7 @@ export async function PATCH(
 **Archivo**: `android/app/src/main/java/.../DeviceGuardFirebaseService.java`
 
 ```java
-package com.deviceguard.kiosk;
+package com.financiatech.kiosk;
 
 import android.util.Log;
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -638,7 +638,7 @@ export function usePushNotifications() {
 
 #### 2A. Backend - Endpoint para ACK
 
-**Archivo**: `src/app/api/device-syncs/ack/route.ts` (deviceguard-web)
+**Archivo**: `src/app/api/device-syncs/ack/route.ts` (financiatech-web)
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
@@ -681,7 +681,7 @@ export async function POST(request: NextRequest) {
 
 #### 2B. Backend - Cola de Comandos Pendientes
 
-**Archivo**: `prisma/schema.prisma` (deviceguard-web)
+**Archivo**: `prisma/schema.prisma` (financiatech-web)
 
 ```prisma
 model PendingCommand {
