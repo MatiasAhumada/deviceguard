@@ -28,6 +28,7 @@ export function getFirebaseAdmin(): App {
 }
 
 export function getMessaging() {
+  getFirebaseAdmin();
   return admin.messaging();
 }
 
