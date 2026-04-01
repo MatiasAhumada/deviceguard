@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { YStack, Text, Button } from "tamagui";
+import { YStack, XStack, Text, Button } from "tamagui";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useKioskMode } from "@/src/hooks/useKioskMode";
 import { COLORS } from "@/src/constants/theme.constant";
