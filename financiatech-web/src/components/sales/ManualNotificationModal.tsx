@@ -8,9 +8,9 @@ import {
   Notification03Icon,
   Shield01Icon,
   Timer01Icon,
-  Lock01Icon,
-  RefreshLeftIcon,
-  AlertTriangleIcon,
+  Locker01Icon,
+  RefreshIcon,
+  Alert02Icon,
 } from "hugeicons-react";
 import { salesUtils } from "@/utils/sales.util";
 
@@ -50,7 +50,7 @@ const INSTANCES = [
     key: "warning2",
     label: "Warning 2",
     description: "Segundo aviso de pago",
-    icon: AlertTriangleIcon,
+    icon: Alert02Icon,
     color: "text-yellow-400",
     bgColor: "bg-yellow-500/10",
     borderColor: "border-yellow-500/30",
@@ -70,7 +70,7 @@ const INSTANCES = [
     key: "block",
     label: "Bloqueo",
     description: "Bloquear dispositivo ahora",
-    icon: Lock01Icon,
+    icon: Locker01Icon,
     color: "text-destructive",
     bgColor: "bg-destructive/10",
     borderColor: "border-destructive/30",
@@ -192,7 +192,7 @@ export function ManualNotificationModal({
                     </p>
                   </div>
                   {isLoading && (
-                    <RefreshLeftIcon
+                    <RefreshIcon
                       size={16}
                       className="text-white animate-spin"
                     />
@@ -215,7 +215,7 @@ export function ManualNotificationModal({
               onClick={loadLogs}
               className="text-xs"
             >
-              <RefreshLeftIcon size={14} className="mr-1" />
+              <RefreshIcon size={14} className="mr-1" />
               Actualizar
             </Button>
           </div>

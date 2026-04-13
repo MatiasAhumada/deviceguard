@@ -102,7 +102,7 @@ export const notificationSchedulerService = {
   },
 
   async processBlockDay(): Promise<NotificationResult[]> {
-    const devices = await this.getDevicesNeedingNotification("block");
+    const devices = await this.getDevicesNeedingBlock();
     const results: NotificationResult[] = [];
 
     for (const device of devices) {
@@ -332,21 +332,21 @@ export const notificationSchedulerService = {
     return device.installments[0];
   },
 
-  hasNotificationForInstallment(
+  async hasNotificationForInstallment(
     deviceId: string,
     type: NotificationType,
     installmentId: string,
     isBlockWarning = false
-  ): boolean {
-    return prisma.notification
-      .count({
-        where: {
-          deviceId,
-          type,
-          installmentId: isBlockWarning ? undefined : installmentId,
-        },
-      })
-      .then((count) => count > 0);
+  ): Promise<boolean> {
+    const count = await prisma.notification.count({
+      where: {
+        deviceId,
+        type,
+        installmentId: isBlockWarning ? undefined : installmentId,
+      },
+    });
+
+    return count > 0;
   },
 
   async sendNotification(
@@ -464,13 +464,10 @@ export const notificationSchedulerService = {
     if (device.sync?.imei) {
       try {
         await fcmService.sendToDevice(device.sync.imei, {
-          type: "BLOCK_WARNING",
-          payload: {
-            hoursRemaining: 4,
-            blockTime: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-            deviceId: device.id,
-            installmentNumber: installmentNumber?.toString() || "",
-          },
+          type: "DEVICE_BLOCKED",
+          deviceId: device.id,
+          imei: device.sync.imei,
+          timestamp: new Date().toISOString(),
         });
       } catch (error) {
         console.error(`Error sending block warning command to device ${device.id}:`, error);
@@ -521,7 +518,7 @@ export const notificationSchedulerService = {
       if (device.sync) {
         await tx.pendingCommand.create({
           data: {
-            deviceId: device.sync.id,
+            deviceId: device.id,
             type: "DEVICE_BLOCKED",
             status: "PENDING",
           },
@@ -550,11 +547,9 @@ export const notificationSchedulerService = {
       try {
         await fcmService.sendToDevice(device.sync.imei, {
           type: "DEVICE_BLOCKED",
-          payload: {
-            deviceId: device.id,
-            blockedAt: new Date().toISOString(),
-            installmentNumber: installmentNumber?.toString() || "",
-          },
+          deviceId: device.id,
+          imei: device.sync.imei,
+          timestamp: new Date().toISOString(),
         });
       } catch (error) {
         console.error(`Error sending block command to device ${device.id}:`, error);
