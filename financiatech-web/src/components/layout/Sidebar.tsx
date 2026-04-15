@@ -24,6 +24,7 @@ import {
   ShoppingCart01Icon,
 } from "hugeicons-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 const ICONS = {
   LayoutDashboard: DashboardSpeed01Icon,
@@ -75,8 +76,13 @@ export function Sidebar() {
           >
             <div className="p-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-mahogany_red rounded-lg flex items-center justify-center font-bold text-sm">
-                  DG
+                <div className="relative w-10 h-10">
+                  <Image
+                    src="/logo.png"
+                    alt="FinanceTech"
+                    fill
+                    className="object-contain"
+                  />
                 </div>
                 <div>
                   <h1 className="font-bold text-white">FinanceTech</h1>
@@ -163,8 +169,13 @@ export function Sidebar() {
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 bg-carbon_black text-white min-h-screen flex-col border-r border-carbon_black-600">
         <div className="p-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-mahogany_red rounded-lg flex items-center justify-center font-bold text-sm">
-              DG
+            <div className="relative w-10 h-10">
+              <Image
+                src="/logo.png"
+                alt="FinanceTech"
+                fill
+                className="object-contain"
+              />
             </div>
             <div>
               <h1 className="font-bold text-white">FinanceTech</h1>
