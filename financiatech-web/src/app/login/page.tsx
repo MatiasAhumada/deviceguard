@@ -47,9 +47,7 @@ export default function LoginPage() {
               className="object-contain rounded-2xl"
             />
           </div>
-          <p className="text-center text-white font-medium">
-            Iniciar Sesión
-          </p>
+          <p className="text-center text-white font-medium">Iniciar Sesión</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
