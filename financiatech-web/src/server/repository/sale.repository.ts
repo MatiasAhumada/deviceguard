@@ -37,7 +37,7 @@ export class SaleRepository {
             { client: { name: { contains: search, mode: "insensitive" } } },
             {
               device: {
-                serialNumber: { contains: search, mode: "insensitive" },
+                imei: { contains: search, mode: "insensitive" },
               },
             },
           ],

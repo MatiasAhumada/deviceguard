@@ -10,11 +10,9 @@ import { COLORS } from "@/src/constants/theme.constant";
 export default function LinkingScreen() {
   const router = useRouter();
 
-  // Recibe los datos reales del dispositivo que vienen desde provisioning.tsx
-  // (la vinculación con el servidor ya fue confirmada exitosamente antes de llegar aquí)
   const params = useLocalSearchParams<{
     deviceName: string;
-    deviceId: string;
+    serialNumber: string;
     adminName: string;
   }>();
 

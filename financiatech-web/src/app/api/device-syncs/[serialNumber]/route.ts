@@ -16,12 +16,12 @@ const cacheHeaders = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ imei: string }> }
+  { params }: { params: Promise<{ serialNumber: string }> }
 ) {
   try {
-    const { imei } = await params;
+    const { serialNumber } = await params;
 
-    const status = await deviceActivationService.checkStatus(imei);
+    const status = await deviceActivationService.checkStatus(serialNumber);
 
     return NextResponse.json(status, {
       status: httpStatus.OK,

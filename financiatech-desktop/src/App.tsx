@@ -271,13 +271,29 @@ function App() {
         // lo ignoramos, no es crítico para el final state
       }
 
+      // Abrir el monitor de actividad ANTES del reinicio
+      appendLog("📱 Abriendo monitor de actividad...");
+      setIsLogViewerOpen(true);
+      
+      // Esperar un momento para que el monitor se abra
+      await delay(1000);
+
       appendLog("Reiniciando dispositivo para aplicar cambios...");
+      appendLog("⏳ El dispositivo se reiniciará y la app se abrirá automáticamente");
+      appendLog("📊 El monitor de actividad esperará la reconexión del dispositivo...");
+      
+      // Iniciar el monitor que esperará la reconexión
+      startLogViewerWithReconnect(connectedDevice);
+      
       await runCommand("adb reboot");
 
       await delay(1000);
 
       setStatus("success");
-      appendLog("🎉 ¡Configuración completada! El dispositivo se reiniciará automáticamente");
+      appendLog("🎉 ¡Configuración completada!");
+      appendLog("📱 El dispositivo se está reiniciando...");
+      appendLog("✅ La aplicación se abrirá automáticamente al iniciar");
+      appendLog("👀 Observa el monitor de actividad para ver los logs del arranque");
 
     } catch (err: any) {
       appendLog(`❌ Error: ${err}`);
@@ -296,6 +312,50 @@ function App() {
       return;
     }
 
+    startLogViewerProcess(connectedDevice);
+  };
+
+  const startLogViewerWithReconnect = (deviceId: string) => {
+    appendLog("🔄 Monitor configurado para esperar reconexión del dispositivo...");
+    appendMobileLog("=== Esperando que el dispositivo se reinicie ===");
+    appendMobileLog("El dispositivo se está reiniciando, esto puede tomar 30-60 segundos...");
+    
+    // Verificar cada 2 segundos si el dispositivo se reconectó
+    const checkInterval = setInterval(async () => {
+      try {
+        const out = await runCommand('adb devices');
+        const lines = out.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+        const devices = lines.slice(1).filter((l: string) => l.includes('device') && !l.includes('unauthorized'));
+        
+        if (devices.length > 0) {
+          const reconnectedDevice = devices[0].split('\t')[0];
+          if (reconnectedDevice === deviceId) {
+            clearInterval(checkInterval);
+            appendLog("✅ Dispositivo reconectado: " + reconnectedDevice);
+            appendMobileLog("=== Dispositivo reconectado - Iniciando captura de logs ===");
+            
+            // Esperar 3 segundos adicionales para que el sistema arranque
+            setTimeout(() => {
+              startLogViewerProcess(reconnectedDevice);
+            }, 3000);
+          }
+        }
+      } catch (e) {
+        // Ignorar errores durante la espera
+      }
+    }, 2000);
+    
+    // Timeout de 2 minutos
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      if (!logProcessRef.current) {
+        appendLog("⚠️ Timeout esperando reconexión del dispositivo");
+        appendMobileLog("No se pudo detectar la reconexión del dispositivo. Intenta iniciar el monitor manualmente.");
+      }
+    }, 120000);
+  };
+
+  const startLogViewerProcess = (deviceId: string) => {
     const { spawn } = window.require('child_process');
     const path = window.require('path');
     const fs = window.require('fs');
@@ -310,10 +370,10 @@ function App() {
 
     const adbPath = fs.existsSync(getAdbPath()) ? getAdbPath() : 'adb';
 
-    const logcatCommand = `"${adbPath}" -s ${connectedDevice} logcat -s FGPollingService FinanciaTech FinanceTechJS FCM NOTIFICATION firebase.messaging CONFIG PROVISIONING AppGuardian MainActivity BootReceiver PersistentService DeviceAdmin DeviceModule`;
+    const logcatCommand = `"${adbPath}" -s ${deviceId} logcat FinanciaTechModule:I FTPollingService:I FTFirebaseService:I DeviceAdmin:I MainActivity:I BootReceiver:I AppGuardianService:I PersistentService:I ReactNativeJS:I AndroidRuntime:E *:S`;
 
     appendLog("📱 Iniciando monitor de actividad del dispositivo...");
-    appendLog(`Dispositivo: ${connectedDevice}`);
+    appendLog(`Dispositivo: ${deviceId}`);
 
     const logProcess = spawn(logcatCommand, { shell: true, detached: false });
     logProcessRef.current = logProcess;
@@ -595,7 +655,7 @@ function App() {
               <div className="log-info">
                 <span>Mostrando últimos {mobileLogs.length} eventos</span>
                 <span className="log-filters">
-                  FinanciaTech | Configuración | Notificaciones | Sistema
+                  FinanciaTech | IMEI | Vinculación
                 </span>
               </div>
             </div>

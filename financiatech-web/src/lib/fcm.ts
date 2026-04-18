@@ -4,19 +4,23 @@ import { DeviceSyncRepository } from "@/server/repository/deviceSync.repository"
 export interface FcmPayload {
   type: "DEVICE_BLOCKED" | "DEVICE_UNBLOCKED";
   deviceId: string;
-  imei: string;
+  serialNumber: string;
   timestamp: string;
 }
 
 export const fcmService = {
-  async sendToDevice(imei: string, payload: FcmPayload): Promise<boolean> {
+  async sendToDevice(
+    serialNumber: string,
+    payload: FcmPayload
+  ): Promise<boolean> {
     console.log("[FCM-SERVICE] Starting sendToDevice:", {
-      imei,
+      serialNumber,
       type: payload.type,
     });
 
     const deviceSyncRepository = new DeviceSyncRepository();
-    const deviceSync = await deviceSyncRepository.findByImei(imei);
+    const deviceSync =
+      await deviceSyncRepository.findBySerialNumber(serialNumber);
 
     console.log("[FCM-SERVICE] DeviceSync found:", {
       hasDeviceSync: !!deviceSync,
@@ -32,7 +36,7 @@ export const fcmService = {
       const data: Record<string, string> = {
         type: payload.type,
         deviceId: payload.deviceId,
-        imei: payload.imei,
+        serialNumber: payload.serialNumber,
         timestamp: payload.timestamp,
       };
 

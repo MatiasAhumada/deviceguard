@@ -16,24 +16,20 @@ const { height } = Dimensions.get("window");
 export default function ProvisioningScreen() {
   const router = useRouter();
   const { code, codeString, setCodeString, getFullCode, isComplete } = useProvisioningCode();
-  const { deviceId, isReady: isDeviceReady } = useDeviceImei();
+  const { serialNumber, isReady: isDeviceReady } = useDeviceImei();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [checkingSync, setCheckingSync] = useState(true);
 
-  // if the device is already synced on the server and marked as blocked we
-  // immediately redirect to the block screen so the user never gets to the
-  // provisioning flow again. we need to run this both when the screen gains
-  // focus and also as soon as the deviceId becomes available (first render).
   const performStatusCheck = async () => {
-    if (!isDeviceReady || !deviceId) {
+    if (!isDeviceReady || !serialNumber) {
       setCheckingSync(false);
       return;
     }
 
     try {
       setCheckingSync(true);
-      const status = await provisioningService.checkStatus(deviceId);
+      const status = await provisioningService.checkStatus(serialNumber);
       if (status.blocked) {
         router.replace({ pathname: "/device-blocked" });
         return;
@@ -43,7 +39,7 @@ export default function ProvisioningScreen() {
           pathname: "/linking-success",
           params: {
             deviceName: status.deviceName,
-            deviceId,
+            serialNumber,
             adminName: status.adminName,
           },
         });
@@ -61,20 +57,17 @@ export default function ProvisioningScreen() {
   useFocusEffect(
     React.useCallback(() => {
       performStatusCheck();
-    }, [isDeviceReady, deviceId, router])
+    }, [isDeviceReady, serialNumber, router])
   );
 
   useEffect(() => {
-    // also check once when deviceId becomes ready (initial bootstrap)
-    if (isDeviceReady && deviceId) {
+    if (isDeviceReady && serialNumber) {
       performStatusCheck();
     }
-  }, [isDeviceReady, deviceId]);
+  }, [isDeviceReady, serialNumber]);
 
-  // El botón está habilitado solo cuando el código está completo Y el deviceId ya fue resuelto
   const canVerify = isComplete() && isDeviceReady && !isLoading;
 
-  // mientras comprobamos sync, no renderizamos nada (evita flash)
   if (isDeviceReady && checkingSync) {
     return null;
   }
@@ -87,7 +80,7 @@ export default function ProvisioningScreen() {
       return;
     }
 
-    if (!deviceId) {
+    if (!serialNumber) {
       setErrorMessage("No se pudo identificar el dispositivo. Intenta reiniciar la app.");
       return;
     }
@@ -96,7 +89,6 @@ export default function ProvisioningScreen() {
     setIsLoading(true);
 
     try {
-      // Obtener FCM token antes de sincronizar
       let fcmToken: string | null = null;
       try {
         const { requestNotificationPermission, getFCMToken } = await import('@/src/services/firebase.service');
@@ -111,20 +103,17 @@ export default function ProvisioningScreen() {
         console.warn('[PROVISIONING] Error getting FCM token:', fcmError);
       }
 
-      const result = await provisioningService.syncDevice(fullCode, deviceId, fcmToken || undefined);
+      const result = await provisioningService.syncDevice(fullCode, serialNumber, fcmToken || undefined);
 
-      // Navega a la pantalla de animación de vinculación pasando los datos
-      // reales del dispositivo para que linking-success.tsx los muestre
       router.push({
         pathname: "/linking",
         params: {
           deviceName: result.deviceName,
-          deviceId: result.imei,
+          serialNumber: result.serialNumber,
           adminName: result.adminName,
         },
       });
     } catch (error: any) {
-      // Log completo en desarrollo para diagnóstico
       if (__DEV__) {
         console.error("[provisioning] syncDevice error:", error?.message, error?.response?.data);
       }

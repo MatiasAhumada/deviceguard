@@ -37,7 +37,7 @@ export function DeviceModal({
     name: "",
     type: DeviceType.SMARTPHONE as DeviceType,
     model: "",
-    serialNumber: "",
+    imei: "",
     status: DeviceStatus.ACTIVE as DeviceStatus,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -49,7 +49,7 @@ export function DeviceModal({
         name: device.name,
         type: device.type,
         model: device.model || "",
-        serialNumber: device.serialNumber || "",
+        imei: device.imei || "",
         status: device.status,
       });
       setIsViewMode(viewMode);
@@ -58,7 +58,7 @@ export function DeviceModal({
         name: "",
         type: DeviceType.SMARTPHONE as DeviceType,
         model: "",
-        serialNumber: "",
+        imei: "",
         status: DeviceStatus.ACTIVE as DeviceStatus,
       });
       setIsViewMode(false);
@@ -71,7 +71,7 @@ export function DeviceModal({
       name: "",
       type: DeviceType.SMARTPHONE as DeviceType,
       model: "",
-      serialNumber: "",
+      imei: "",
       status: DeviceStatus.ACTIVE as DeviceStatus,
     });
     setErrors({});
@@ -202,16 +202,25 @@ export function DeviceModal({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="serialNumber">Número de Serie (Opcional)</Label>
+          <Label htmlFor="imei">IMEI</Label>
           <Input
-            id="serialNumber"
-            value={formData.serialNumber || ""}
-            onChange={(e) =>
-              setFormData({ ...formData, serialNumber: e.target.value })
-            }
-            placeholder="Ej: ABC123XYZ"
+            id="imei"
+            value={formData.imei || ""}
+            onChange={(e) => {
+              setFormData({ ...formData, imei: e.target.value });
+              if (errors.imei) setErrors({ ...errors, imei: "" });
+            }}
+            placeholder="Ingrese el IMEI del dispositivo"
             disabled={isViewMode}
+            className={
+              errors.imei
+                ? "border-destructive focus:border-destructive focus:ring-destructive"
+                : ""
+            }
           />
+          {errors.imei && (
+            <p className="text-xs text-destructive">{errors.imei}</p>
+          )}
         </div>
 
         <div className="space-y-2">

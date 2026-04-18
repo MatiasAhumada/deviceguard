@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     );
 
     let deviceSync = await prisma.deviceSync.findUnique({
-      where: { imei: validatedData.imei },
+      where: { serialNumber: validatedData.imei },
       include: {
         device: true,
       },

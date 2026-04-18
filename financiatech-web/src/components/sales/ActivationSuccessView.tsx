@@ -1,6 +1,10 @@
 "use client";
 
-import { Tick02Icon, SmartPhone02Icon, InformationDiamondIcon } from "hugeicons-react";
+import {
+  Tick02Icon,
+  SmartPhone02Icon,
+  InformationDiamondIcon,
+} from "hugeicons-react";
 import { IDevice } from "@/types";
 import { DEVICE_TYPE_LABELS } from "@/schemas/device.schema";
 
@@ -8,9 +12,7 @@ interface ActivationSuccessViewProps {
   device: IDevice;
 }
 
-export function ActivationSuccessView({
-  device,
-}: ActivationSuccessViewProps) {
+export function ActivationSuccessView({ device }: ActivationSuccessViewProps) {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-4">
@@ -52,7 +54,9 @@ export function ActivationSuccessView({
               <SmartPhone02Icon size={16} className="text-success" />
               <div>
                 <p className="text-silver-400 text-xs">Tipo</p>
-                <p className="text-white font-medium">{DEVICE_TYPE_LABELS[device.type]}</p>
+                <p className="text-white font-medium">
+                  {DEVICE_TYPE_LABELS[device.type]}
+                </p>
               </div>
             </div>
             {device.model && (
@@ -66,22 +70,28 @@ export function ActivationSuccessView({
             )}
           </div>
 
-          {device.serialNumber && (
+          {device.imei && (
             <div className="flex items-center gap-2 text-sm">
               <InformationDiamondIcon size={16} className="text-success" />
               <div className="flex-1">
-                <p className="text-silver-400 text-xs">Número de Serie</p>
-                <p className="text-white font-mono font-medium">{device.serialNumber}</p>
+                <p className="text-silver-400 text-xs">IMEI</p>
+                <p className="text-white font-mono font-medium">
+                  {device.imei}
+                </p>
               </div>
             </div>
           )}
 
-          {device.sync?.imei && (
+          {device.sync?.serialNumber && (
             <div className="flex items-center gap-2 p-3 bg-success/10 rounded-lg border border-success/30">
               <InformationDiamondIcon size={18} className="text-success" />
               <div className="flex-1">
-                <p className="text-silver-400 text-xs uppercase tracking-wider">IMEI Registrado</p>
-                <p className="text-white font-mono font-bold text-lg">{device.sync.imei}</p>
+                <p className="text-silver-400 text-xs uppercase tracking-wider">
+                  Serial Number Registrado
+                </p>
+                <p className="text-white font-mono font-bold text-lg">
+                  {device.sync.serialNumber}
+                </p>
               </div>
             </div>
           )}
@@ -91,7 +101,9 @@ export function ActivationSuccessView({
               <InformationDiamondIcon size={16} className="text-success" />
               <div className="flex-1">
                 <p className="text-silver-400 text-xs">FCM Token</p>
-                <p className="text-white font-mono text-xs truncate">{device.sync.fcmToken}</p>
+                <p className="text-white font-mono text-xs truncate">
+                  {device.sync.fcmToken}
+                </p>
               </div>
             </div>
           )}
@@ -100,14 +112,16 @@ export function ActivationSuccessView({
             <div className="flex items-center gap-2 text-sm">
               <InformationDiamondIcon size={16} className="text-success" />
               <div className="flex-1">
-                <p className="text-silver-400 text-xs">Fecha de Sincronización</p>
+                <p className="text-silver-400 text-xs">
+                  Fecha de Sincronización
+                </p>
                 <p className="text-white font-medium">
-                  {new Date(device.sync.syncedAt).toLocaleString('es-AR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+                  {new Date(device.sync.syncedAt).toLocaleString("es-AR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
                 </p>
               </div>
@@ -118,7 +132,8 @@ export function ActivationSuccessView({
         <div className="border-t border-success/20 pt-3 flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
           <p className="text-xs text-success font-medium">
-            Monitoreo activo — el sistema verificará pagos según el plan configurado
+            Monitoreo activo — el sistema verificará pagos según el plan
+            configurado
           </p>
         </div>
       </div>

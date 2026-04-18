@@ -13,7 +13,7 @@ export interface ActivationResult {
   success: boolean;
   deviceName: string;
   deviceId: string;
-  imei: string;
+  serialNumber: string;
   adminName: string;
   sync: IDeviceSync;
 }
@@ -31,7 +31,7 @@ export class DeviceActivationService {
 
   async activate(
     activationCode: string,
-    imei: string,
+    serialNumber: string,
     fcmToken?: string
   ): Promise<ActivationResult> {
     const sale = await this.saleRepository.findByActivationCode(activationCode);
@@ -50,25 +50,28 @@ export class DeviceActivationService {
       });
     }
 
-    const existingSync = await this.deviceSyncRepository.findByImei(imei);
+    const existingSync =
+      await this.deviceSyncRepository.findBySerialNumber(serialNumber);
 
     if (existingSync) {
       throw new ApiError({
         status: httpStatus.CONFLICT,
-        message: "Este IMEI ya está registrado",
+        message: "Este Serial Number ya está registrado",
       });
     }
 
     return prisma.$transaction(async (tx) => {
       await tx.device.update({
         where: { id: sale.deviceId },
-        data: { status: DeviceStatus.SOLD_SYNCED },
+        data: {
+          status: DeviceStatus.SOLD_SYNCED,
+        },
       });
 
       const sync = await tx.deviceSync.create({
         data: {
           deviceId: sale.deviceId,
-          imei,
+          serialNumber,
           fcmToken: fcmToken || null,
         },
         include: {
@@ -103,24 +106,26 @@ export class DeviceActivationService {
         success: true,
         deviceName: sale.device.name,
         deviceId: sale.deviceId,
-        imei,
+        serialNumber,
         adminName,
         sync,
       };
     });
   }
 
-  async checkStatus(imei: string): Promise<DeviceStatusCheckResult> {
-    const cacheKey = `device:${imei}`;
+  async checkStatus(serialNumber: string): Promise<DeviceStatusCheckResult> {
+    const cacheKey = `device:${serialNumber}`;
     const cached = cache.get(cacheKey);
 
     if (cached) {
-      this.addLastPingUpdate(imei);
+      this.addLastPingUpdate(serialNumber);
       return cached;
     }
 
     const deviceStatus =
-      await this.deviceSyncRepository.findDeviceStatusByImei(imei);
+      await this.deviceSyncRepository.findDeviceStatusBySerialNumber(
+        serialNumber
+      );
 
     if (!deviceStatus) {
       throw new ApiError({
@@ -161,8 +166,8 @@ export class DeviceActivationService {
     return result;
   }
 
-  private addLastPingUpdate(deviceIdOrImei: string): void {
-    batchUpdater.addDeviceId(deviceIdOrImei);
+  private addLastPingUpdate(deviceIdOrSerialNumber: string): void {
+    batchUpdater.addDeviceId(deviceIdOrSerialNumber);
   }
 
   async getSyncStatus(

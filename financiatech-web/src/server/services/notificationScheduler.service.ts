@@ -31,7 +31,7 @@ interface DeviceWithRelations {
   }>;
   sync: {
     fcmToken: string | null;
-    imei: string;
+    serialNumber: string;
   } | null;
   client: {
     name: string;
@@ -486,12 +486,12 @@ export const notificationSchedulerService = {
       }
     }
 
-    if (device.sync?.imei) {
+    if (device.sync?.serialNumber) {
       try {
-        await fcmService.sendToDevice(device.sync.imei, {
+        await fcmService.sendToDevice(device.sync.serialNumber, {
           type: "DEVICE_BLOCKED",
           deviceId: device.id,
-          imei: device.sync.imei,
+          serialNumber: device.sync.serialNumber,
           timestamp: new Date().toISOString(),
         });
       } catch (error) {
@@ -575,12 +575,12 @@ export const notificationSchedulerService = {
       }
     }
 
-    if (device.sync?.imei) {
+    if (device.sync?.serialNumber) {
       try {
-        await fcmService.sendToDevice(device.sync.imei, {
+        await fcmService.sendToDevice(device.sync.serialNumber, {
           type: "DEVICE_BLOCKED",
           deviceId: device.id,
-          imei: device.sync.imei,
+          serialNumber: device.sync.serialNumber,
           timestamp: new Date().toISOString(),
         });
       } catch (error) {

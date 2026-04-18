@@ -6,11 +6,10 @@ import { z } from "zod";
 
 const createSyncSchema = z.object({
   activationCode: z.string().min(1, "Código requerido"),
-  imei: z.string().min(1, "IMEI requerido"),
+  serialNumber: z.string().min(1, "Serial Number requerido"),
   fcmToken: z.string().optional(),
 });
 
-// Headers CORS para permitir conexiones desde la app mobile
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -24,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     const result = await deviceActivationService.activate(
       validatedData.activationCode,
-      validatedData.imei,
+      validatedData.serialNumber,
       validatedData.fcmToken
     );
 

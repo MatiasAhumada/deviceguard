@@ -14,20 +14,16 @@ import { COLORS } from "@/src/constants/theme.constant";
 
 export default function DeviceBlockedScreen() {
   const router = useRouter();
-  const { deviceId, isReady } = useDeviceImei();
+  const { serialNumber, isReady } = useDeviceImei();
   const [pending, setPending] = useState<number | null>(null);
   const navigation = useNavigation();
   const isUnblockedRef = useRef(false);
   const kioskControl = useKioskMode(true);
 
-  // Escuchar cambios de estado emitidos por el servicio nativo Java
-  // Esto reemplaza el polling local de React Native
   useDeviceStateListener(
-    // onBlocked: ya estamos en la pantalla de bloqueado, no hacer nada
     () => {
       console.log('[DG] Device blocked event received (already in blocked screen)');
     },
-    // onUnblocked: el servidor desbloqueó el dispositivo
     async () => {
       if (!isUnblockedRef.current) {
         isUnblockedRef.current = true;
@@ -37,17 +33,14 @@ export default function DeviceBlockedScreen() {
     }
   );
 
-  // Polling de respaldo por si el evento nativo falla
-  // Verifica directamente SharedPreferences cada 2 segundos
   useFocusEffect(
     React.useCallback(() => {
-      if (!deviceId) return;
+      if (!serialNumber) return;
 
       const checkLocalState = async () => {
         try {
           const { DeviceModule } = NativeModules;
-          // Verificar estado local desde SharedPreferences
-          const status = await provisioningService.checkStatus(deviceId as string);
+          const status = await provisioningService.checkStatus(serialNumber as string);
           if (!status.blocked && !isUnblockedRef.current) {
             isUnblockedRef.current = true;
             await kioskControl.stopKiosk();
@@ -58,17 +51,15 @@ export default function DeviceBlockedScreen() {
         }
       };
 
-      // Check inmediato
       checkLocalState();
       
-      // Verificar cada 2 segundos como respaldo
       const intervalId = setInterval(checkLocalState, 2000);
       return () => clearInterval(intervalId);
-    }, [deviceId, router, kioskControl])
+    }, [serialNumber, router, kioskControl])
   );
 
   useEffect(() => {
-    if (!deviceId || Platform.OS !== "android") return;
+    if (!serialNumber || Platform.OS !== "android") return;
     const { DeviceModule } = NativeModules;
     if (!DeviceModule?.initPollingService) return;
     const apiUrl = Constants.expoConfig?.extra?.API_URL;
@@ -76,10 +67,10 @@ export default function DeviceBlockedScreen() {
       console.error("[DG] FATAL: API_URL no está configurada en app.config");
       throw new Error("Falta configurar API_URL en app.config");
     }
-    DeviceModule.initPollingService(deviceId as string, apiUrl)
+    DeviceModule.initPollingService(serialNumber as string, apiUrl)
       .then(() => console.log("[DG] Background polling service started from block"))
       .catch((e: any) => console.warn("[DG] initPollingService error:", e));
-  }, [deviceId]);
+  }, [serialNumber]);
 
   // Activar modo kiosco cuando estemos en esta pantalla
 
@@ -120,18 +111,17 @@ export default function DeviceBlockedScreen() {
     router.push("/payment-methods");
   };
 
-  // Cargar monto pendiente cuando tenemos el deviceId
   useEffect(() => {
-    if (!isReady || !deviceId) return;
+    if (!isReady || !serialNumber) return;
     (async () => {
       try {
-        const status = await provisioningService.checkStatus(deviceId);
+        const status = await provisioningService.checkStatus(serialNumber);
         setPending(status.pendingAmount);
       } catch (e) {
         console.warn("unable to fetch pending amount", e);
       }
     })();
-  }, [isReady, deviceId]);
+  }, [isReady, serialNumber]);
 
   return (
     <YStack
