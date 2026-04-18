@@ -60,7 +60,7 @@ export const deviceControlService = {
       }
 
       if (device.sync) {
-        cache.invalidateDevice(device.sync.imei);
+        cache.invalidateDevice(device.sync.serialNumber);
 
         await prisma.pendingCommand.create({
           data: {
@@ -126,7 +126,7 @@ export const deviceControlService = {
       }
 
       if (device.sync) {
-        cache.invalidateDevice(device.sync.imei);
+        cache.invalidateDevice(device.sync.serialNumber);
 
         await prisma.pendingCommand.create({
           data: {

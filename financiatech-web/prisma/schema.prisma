@@ -175,7 +175,7 @@ model Device {
   name         String
   type         DeviceType
   model        String?
-  serialNumber String?      @unique
+  imei         String       @unique
   status       DeviceStatus @default(ACTIVE)
   adminId      String
   clientId     String?
@@ -318,12 +318,12 @@ model FinancingPlan {
 }
 
 model DeviceSync {
-  id       String   @id @default(cuid())
-  deviceId String   @unique
-  imei     String   @unique
-  fcmToken String?
-  syncedAt DateTime @default(now())
-  lastPing DateTime @default(now())
+  id           String   @id @default(cuid())
+  deviceId     String   @unique
+  serialNumber String   @unique
+  fcmToken     String?
+  syncedAt     DateTime @default(now())
+  lastPing     DateTime @default(now())
 
   device          Device          @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   pendingCommands PendingCommand[]
@@ -332,6 +332,7 @@ model DeviceSync {
   updatedAt DateTime @updatedAt
 
   @@index([lastPing], name: "idx_device_syncs_lastping")
+  @@index([serialNumber], name: "idx_device_syncs_serial")
   @@map("device_syncs")
 }
 

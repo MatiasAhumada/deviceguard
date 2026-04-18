@@ -7,14 +7,14 @@ export interface SyncDeviceResponse {
   success: boolean;
   deviceName: string;
   deviceId: string;
-  imei: string;
+  serialNumber: string;
   adminName: string;
 }
 
 export const provisioningService = {
   syncDevice: async (
     activationCode: string,
-    deviceId: string,
+    serialNumber: string,
     fcmToken?: string
   ): Promise<SyncDeviceResponse> => {
     logger.info('PROVISIONING', '========== SYNC DEVICE START ==========');
@@ -22,13 +22,13 @@ export const provisioningService = {
     logger.info('PROVISIONING', `Endpoint: ${API_ENDPOINTS.DEVICES.SYNC}`);
     logger.info('PROVISIONING', `Full URL: ${API_URL}${API_ENDPOINTS.DEVICES.SYNC}`);
     logger.info('PROVISIONING', `Activation Code: ${activationCode}`);
-    logger.info('PROVISIONING', `IMEI: ${deviceId}`);
+    logger.info('PROVISIONING', `Serial Number: ${serialNumber}`);
     logger.info('PROVISIONING', `FCM Token: ${fcmToken ? 'YES' : 'NO'}`);
 
     try {
       const response = await clientAxios.post<SyncDeviceResponse>(
         API_ENDPOINTS.DEVICES.SYNC,
-        { activationCode, imei: deviceId, fcmToken }
+        { activationCode, serialNumber, fcmToken }
       );
       logger.info('PROVISIONING', 'Sync successful!');
       logger.info('PROVISIONING', `Response: ${JSON.stringify(response.data)}`);
@@ -48,7 +48,7 @@ export const provisioningService = {
     }
   },
 
-  checkStatus: async (deviceId: string): Promise<{
+  checkStatus: async (serialNumber: string): Promise<{
     blocked: boolean;
     status: string;
     message: string;
@@ -56,7 +56,7 @@ export const provisioningService = {
     deviceName?: string;
     adminName?: string;
   }> => {
-    logger.info('PROVISIONING', `Calling checkStatus for device: ${deviceId}`);
+    logger.info('PROVISIONING', `Calling checkStatus for device: ${serialNumber}`);
     
     try {
       const response = await clientAxios.get<{
@@ -66,7 +66,7 @@ export const provisioningService = {
         pendingAmount: number;
         deviceName?: string;
         adminName?: string;
-      }>(API_ENDPOINTS.DEVICES.CHECK_STATUS(deviceId));
+      }>(API_ENDPOINTS.DEVICES.CHECK_STATUS(serialNumber));
       
       logger.info('PROVISIONING', `Status check result: ${JSON.stringify(response.data)}`);
       return response.data;

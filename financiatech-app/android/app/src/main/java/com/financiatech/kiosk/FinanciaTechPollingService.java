@@ -176,7 +176,11 @@ public class FinanciaTechPollingService extends Service {
         lastKnownBlocked = prefs.getBoolean(KEY_IS_LOCKED, false);
 
         // Promover al servicio a foreground (Android exige una notificación)
-        startForeground(NOTIFICATION_ID, buildNotification());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(NOTIFICATION_ID, buildNotification(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+        } else {
+            startForeground(NOTIFICATION_ID, buildNotification());
+        }
 
         // Iniciar el servicio persistente guardián
         PersistentService.start(this);
@@ -229,15 +233,11 @@ public class FinanciaTechPollingService extends Service {
 
     private void startPolling() {
         stopPolling();
-
         handler.post(pollRunnable);
-        long interval = getCurrentPollInterval();
-        Log.i(TAG, "Polling STARTED with interval: " + interval + "ms");
     }
 
     private void stopPolling() {
         handler.removeCallbacks(pollRunnable);
-        Log.i(TAG, "Polling STOPPED");
     }
 
     private void pollServer() {
@@ -246,11 +246,8 @@ public class FinanciaTechPollingService extends Service {
         String apiUrl = prefs.getString(KEY_API_URL, null);
 
         if (imei == null || apiUrl == null) {
-            Log.w(TAG, "Missing IMEI or apiUrl, skipping poll.");
             return;
         }
-
-        Log.d(TAG, "Polling server for IMEI: " + imei);
 
         try {
             String endpoint = apiUrl + "/api/device-syncs/" + imei;
@@ -263,14 +260,12 @@ public class FinanciaTechPollingService extends Service {
             conn.setRequestProperty("Accept", "application/json");
 
             int responseCode = conn.getResponseCode();
-            Log.d(TAG, "Poll response code: " + responseCode);
 
             if (responseCode == 404) {
-                Log.w(TAG, "Device not found on server (404) - waiting for reprovisioning");
                 consecutiveFailures++;
                 
                 if (consecutiveFailures >= 10) {
-                    Log.w(TAG, "10 consecutive 404 responses - device may need reprovisioning");
+                    Log.w(TAG, "Dispositivo no encontrado en servidor - puede necesitar revinculación");
                 }
                 
                 useCacheOrBackoff(prefs);
@@ -326,13 +321,10 @@ public class FinanciaTechPollingService extends Service {
         boolean useCache = (System.currentTimeMillis() - lastSuccess) < CACHE_MAX_AGE_MS;
 
         if (useCache) {
-            boolean cachedState = prefs.getBoolean(KEY_LAST_KNOWN_STATE, false);
-            Log.d(TAG, "Using cached state: blocked=" + cachedState);
             return;
         }
 
         long backoff = calculateBackoff();
-        Log.w(TAG, "Poll failed, retrying in " + backoff + "ms");
         handler.postDelayed(pollRunnable, backoff);
     }
 
@@ -341,20 +333,16 @@ public class FinanciaTechPollingService extends Service {
      * fue desbloqueado remotamente. Esto ocurre cada 5 minutos cuando está bloqueado.
      */
     private void handleUnlockFallback() {
-        Log.d(TAG, "Unlock fallback: checking if server unlocked device");
-
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         String imei = prefs.getString(KEY_DEVICE_ID, null);
         String apiUrl = prefs.getString(KEY_API_URL, null);
 
         if (imei == null || apiUrl == null) {
-            Log.w(TAG, "Missing IMEI or apiUrl for unlock fallback.");
             return;
         }
 
         try {
             String endpoint = apiUrl + "/api/device-syncs/" + imei;
-            Log.d(TAG, "Unlock fallback endpoint: " + endpoint);
             
             URL url = new URL(endpoint);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -364,10 +352,8 @@ public class FinanciaTechPollingService extends Service {
             conn.setRequestProperty("Accept", "application/json");
 
             int responseCode = conn.getResponseCode();
-            Log.d(TAG, "Unlock fallback response code: " + responseCode);
             
             if (responseCode == 404) {
-                Log.w(TAG, "Device not found on server (404) during unlock fallback - clearing sync state");
                 prefs.edit()
                      .putBoolean(KEY_IS_LINKED, false)
                      .putBoolean(KEY_IS_LOCKED, false)
@@ -382,7 +368,6 @@ public class FinanciaTechPollingService extends Service {
             }
             
             if (responseCode != 200) {
-                Log.w(TAG, "Unlock fallback returned HTTP " + responseCode);
                 conn.disconnect();
                 return;
             }
@@ -396,26 +381,14 @@ public class FinanciaTechPollingService extends Service {
             conn.disconnect();
 
             String body = sb.toString();
-            Log.d(TAG, "Unlock fallback response: " + body);
-            
-            // Buscar "blocked":false en la respuesta
             boolean isBlocked = body.contains("\"blocked\":true");
 
             if (!isBlocked && lastKnownBlocked) {
-                Log.i(TAG, "Unlock fallback: server reports device is UNBLOCKED");
                 onDeviceUnblocked();
-            } else {
-                Log.d(TAG, "Unlock fallback: device still blocked");
             }
 
-        } catch (java.net.UnknownHostException e) {
-            Log.e(TAG, "Unlock fallback failed: Unknown host - " + e.getMessage());
-        } catch (java.net.ConnectException e) {
-            Log.e(TAG, "Unlock fallback failed: Connection refused - " + e.getMessage());
-        } catch (java.net.SocketTimeoutException e) {
-            Log.e(TAG, "Unlock fallback failed: Connection timeout - " + e.getMessage());
         } catch (Exception e) {
-            Log.e(TAG, "Unlock fallback failed: " + e.getClass().getSimpleName() + " - " + e.getMessage(), e);
+            // Ignorar errores silenciosamente
         }
     }
 
@@ -474,8 +447,6 @@ public class FinanciaTechPollingService extends Service {
                 unlockFallbackPendingIntent
             );
         }
-
-        Log.d(TAG, "Unlock fallback scheduled for " + (UNLOCK_FALLBACK_INTERVAL_MS / 1000 / 60) + " minutes");
     }
 
     /**
@@ -484,7 +455,6 @@ public class FinanciaTechPollingService extends Service {
     private void stopUnlockFallback() {
         if (alarmManager != null && unlockFallbackPendingIntent != null) {
             alarmManager.cancel(unlockFallbackPendingIntent);
-            Log.d(TAG, "Unlock fallback cancelled");
         }
     }
 
@@ -731,8 +701,6 @@ public class FinanciaTechPollingService extends Service {
                 pendingIntent
             );
         }
-
-        Log.d(TAG, "Watchdog scheduled for " + watchdogInterval + "ms");
     }
 
     /**
@@ -752,7 +720,6 @@ public class FinanciaTechPollingService extends Service {
         );
 
         alarmManager.cancel(pendingIntent);
-        Log.d(TAG, "Watchdog cancelled");
     }
 
     /**
@@ -783,8 +750,6 @@ public class FinanciaTechPollingService extends Service {
         if (unlockFallbackPendingIntent != null) {
             alarmManager.cancel(unlockFallbackPendingIntent);
         }
-
-        Log.d(TAG, "All alarms cancelled");
     }
 
     /**
@@ -798,7 +763,7 @@ public class FinanciaTechPollingService extends Service {
         Intent intent = new Intent(this, FinanciaTechPollingService.class);
         PendingIntent pendingIntent = PendingIntent.getService(
             this,
-            1, // Different request code
+            1,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
@@ -816,7 +781,5 @@ public class FinanciaTechPollingService extends Service {
                 pendingIntent
             );
         }
-
-        Log.i(TAG, "Immediate restart scheduled in " + RESTART_DELAY_MS + "ms");
     }
 }

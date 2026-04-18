@@ -26,72 +26,94 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         
-        Log.i(TAG, "Boot broadcast received: " + action);
+        Log.i(TAG, "========================================");
+        Log.i(TAG, "BootReceiver triggered!");
+        Log.i(TAG, "Action: " + action);
+        Log.i(TAG, "========================================");
 
-        // Manejar múltiples eventos de boot para máxima compatibilidad
         if (Intent.ACTION_BOOT_COMPLETED.equals(action) ||
             Intent.ACTION_LOCKED_BOOT_COMPLETED.equals(action) ||
             Intent.ACTION_USER_PRESENT.equals(action) ||
             "android.intent.action.QUICKBOOT_POWERON".equals(action)) {
             
-            Log.i(TAG, "Initiating FinanciaTech startup sequence...");
+            Log.i(TAG, "✅ Boot action matched! Starting FinanciaTech...");
             
             // SIEMPRE iniciar el servicio guardián que reabre la app
             try {
                 AppGuardianService.start(context);
-                Log.i(TAG, "AppGuardianService started");
+                Log.i(TAG, "✅ AppGuardianService started");
             } catch (Exception e) {
-                Log.e(TAG, "Failed to start AppGuardianService: " + e.getMessage());
+                Log.e(TAG, "❌ Failed to start AppGuardianService: " + e.getMessage(), e);
             }
             
             SharedPreferences prefs = context.getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE);
             boolean isLinked = prefs.getBoolean("isLinked", false);
             
+            Log.i(TAG, "Device linked status: " + isLinked);
+            
             // SIEMPRE lanzar la app al iniciar el dispositivo
-            try {
-                Intent launchIntent = context.getPackageManager()
-                        .getLaunchIntentForPackage(context.getPackageName());
-                if (launchIntent != null) {
-                    launchIntent.addFlags(
-                        Intent.FLAG_ACTIVITY_NEW_TASK |
-                        Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED |
-                        Intent.FLAG_ACTIVITY_SINGLE_TOP
-                    );
-                    context.startActivity(launchIntent);
-                    Log.i(TAG, "App launched successfully");
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to launch app: " + e.getMessage());
-            }
+            // Usar múltiples intentos con diferentes delays para máxima compatibilidad
+            launchAppWithRetry(context, 3000);
+            launchAppWithRetry(context, 5000);
+            launchAppWithRetry(context, 8000);
             
             // Solo iniciar servicios si el dispositivo está vinculado
             if (!isLinked) {
-                Log.i(TAG, "Device not linked yet. Services will NOT start.");
+                Log.i(TAG, "⚠️ Device not linked yet. Services will NOT start.");
                 return;
             }
             
             // Dispositivo vinculado - iniciar servicios
-            Log.i(TAG, "Device is linked. Starting services...");
+            Log.i(TAG, "✅ Device is linked. Starting services...");
             
             // 1. Iniciar el servicio persistente guardián primero
             try {
                 PersistentService.start(context);
-                Log.i(TAG, "PersistentService guardian started");
+                Log.i(TAG, "✅ PersistentService started");
             } catch (Exception e) {
-                Log.e(TAG, "Failed to start persistent service: " + e.getMessage());
+                Log.e(TAG, "❌ Failed to start PersistentService: " + e.getMessage(), e);
             }
 
             // 2. Iniciar el servicio de polling
             try {
                 FinanciaTechPollingService.start(context);
-                Log.i(TAG, "Polling service started successfully");
+                Log.i(TAG, "✅ PollingService started");
             } catch (Exception e) {
-                Log.e(TAG, "Failed to start polling service: " + e.getMessage());
+                Log.e(TAG, "❌ Failed to start PollingService: " + e.getMessage(), e);
             }
 
-            // 3. Programar reinicio del servicio como backup (Android puede matar servicios)
+            // 3. Programar reinicio del servicio como backup
             scheduleServiceRestart(context);
+        } else {
+            Log.w(TAG, "⚠️ Boot action not matched: " + action);
         }
+    }
+    
+    /**
+     * Lanza la app con un delay específico.
+     */
+    private void launchAppWithRetry(Context context, long delayMs) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(() -> {
+            try {
+                Log.i(TAG, "🚀 Attempting to launch app (delay: " + delayMs + "ms)...");
+                Intent launchIntent = context.getPackageManager()
+                        .getLaunchIntentForPackage(context.getPackageName());
+                if (launchIntent != null) {
+                    launchIntent.addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK |
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    );
+                    context.startActivity(launchIntent);
+                    Log.i(TAG, "✅ App launch intent sent successfully (delay: " + delayMs + "ms)");
+                } else {
+                    Log.e(TAG, "❌ Launch intent is null (delay: " + delayMs + "ms)");
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Failed to launch app (delay: " + delayMs + "ms): " + e.getMessage(), e);
+            }
+        }, delayMs);
     }
 
     /**

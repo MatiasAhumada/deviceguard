@@ -263,11 +263,11 @@ export default function DevicesPage() {
               ),
             },
             {
-              key: "serialNumber",
-              label: "SERIAL",
+              key: "imei",
+              label: "IMEI",
               render: (device: IDevice) => (
                 <p className="text-xs font-medium text-silver-400">
-                  {device.serialNumber || "Sin serial"}
+                  {device.imei || "Sin IMEI"}
                 </p>
               ),
             },

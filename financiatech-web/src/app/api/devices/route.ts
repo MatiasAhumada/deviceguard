@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       name: validatedData.name,
       type: validatedData.type,
       model: validatedData.model || null,
-      serialNumber: validatedData.serialNumber || null,
+      imei: validatedData.imei,
       status: validatedData.status,
       admin: { connect: { id: payload.adminId! } },
     });

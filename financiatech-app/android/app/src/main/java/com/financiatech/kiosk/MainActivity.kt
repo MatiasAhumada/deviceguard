@@ -27,6 +27,9 @@ class MainActivity : ReactActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     SplashScreenManager.registerOnActivity(this)
+    // @generated begin expo-splashscreen - expo prebuild (DO NOT MODIFY) sync-f3ff59a738c56c9a6119210cb55f0b613eb8b6af
+    SplashScreenManager.registerOnActivity(this)
+    // @generated end expo-splashscreen
     super.onCreate(null)
 
     prefs = getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE)
@@ -47,26 +50,26 @@ class MainActivity : ReactActivity() {
         )
     }
 
-    // 🛡️ REFUERZO: Asegurarnos de que el bloqueo de Reseteo de Fábrica
-    // se aplique incondicionalmente cada vez que la app está abierta,
-    // por si el perfil de Device Owner se re-asignó sin pasar por onEnabled().
+    // 🛡️ REFUERZO: Aplicar restricciones básicas SIEMPRE que seamos Device Owner
+    // Esto previene factory reset y desinstalación incluso antes de vincular
     try {
         val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
         val adminComponent = android.content.ComponentName(this, DeviceAdmin::class.java)
         if (dpm.isDeviceOwnerApp(packageName)) {
             dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_FACTORY_RESET)
+            dpm.setUninstallBlocked(adminComponent, packageName, true)
             dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_SAFE_BOOT)
-            android.util.Log.i("MainActivity", "Factory Reset restrictions strictly enforced on launch.")
+            android.util.Log.i("MainActivity", "Basic restrictions enforced (no factory reset, no uninstall, no safe boot)")
         }
     } catch (e: Exception) {
-        android.util.Log.e("MainActivity", "Failed to force restrictions", e)
+        android.util.Log.e("MainActivity", "Failed to force basic restrictions", e)
     }
 
     // 🛡️ ACTIVAR KIOSK MODE si el dispositivo está bloqueado
     val isLocked = prefs.getBoolean("isLocked", false)
     val isLinked = prefs.getBoolean("isLinked", false)
 
-    // Iniciar el servicio guardián que reabre la app si se cierra
+    // Iniciar el servicio guardián SIEMPRE (incluso antes de vincular)
     try {
       AppGuardianService.start(this)
       android.util.Log.i("MainActivity", "AppGuardianService started")

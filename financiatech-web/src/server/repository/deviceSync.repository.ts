@@ -23,11 +23,11 @@ interface DeviceSyncStatusRaw {
 }
 
 export class DeviceSyncRepository {
-  async create(deviceId: string, imei: string): Promise<IDeviceSync> {
+  async create(deviceId: string, serialNumber: string): Promise<IDeviceSync> {
     return prisma.deviceSync.create({
       data: {
         deviceId,
-        imei,
+        serialNumber,
       },
       include: {
         device: true,
@@ -35,9 +35,9 @@ export class DeviceSyncRepository {
     });
   }
 
-  async findByImei(imei: string): Promise<IDeviceSync | null> {
+  async findBySerialNumber(serialNumber: string): Promise<IDeviceSync | null> {
     return prisma.deviceSync.findUnique({
-      where: { imei },
+      where: { serialNumber },
       include: {
         device: true,
       },
@@ -60,11 +60,11 @@ export class DeviceSyncRepository {
     });
   }
 
-  async findDeviceStatusByImei(
-    imei: string
+  async findDeviceStatusBySerialNumber(
+    serialNumber: string
   ): Promise<DeviceSyncStatusRaw | null> {
     const result = (await prisma.deviceSync.findUnique({
-      where: { imei },
+      where: { serialNumber },
       select: {
         deviceId: true,
         device: {

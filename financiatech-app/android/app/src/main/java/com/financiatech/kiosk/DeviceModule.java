@@ -68,27 +68,57 @@ public class DeviceModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void getDeviceImei(Promise promise) {
         try {
+            String deviceId = null;
+            
+            if (devicePolicyManager.isDeviceOwnerApp(reactContext.getPackageName())) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    try {
+                        deviceId = Build.getSerial();
+                        if (deviceId != null && !deviceId.isEmpty() && !deviceId.equals("unknown")) {
+                            Log.i(TAG, "Serial Number obtenido (Device Owner): " + deviceId);
+                            promise.resolve(deviceId);
+                            return;
+                        }
+                    } catch (SecurityException e) {
+                        Log.w(TAG, "No se pudo obtener Serial Number: " + e.getMessage());
+                    }
+                }
+            }
+            
             android.telephony.TelephonyManager tm = (android.telephony.TelephonyManager) reactContext.getSystemService(Context.TELEPHONY_SERVICE);
-            String imei = null;
+            
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 try {
-                    imei = tm.getImei();
+                    deviceId = tm.getImei();
+                    if (deviceId != null && !deviceId.isEmpty()) {
+                        Log.i(TAG, "IMEI obtenido: " + deviceId);
+                        promise.resolve(deviceId);
+                        return;
+                    }
                 } catch (SecurityException e) {
-                    Log.e(TAG, "SecurityException getting IMEI", e);
+                    Log.w(TAG, "IMEI no accesible: " + e.getMessage());
                 }
             } else {
                 try {
-                    // Suppress deprecation warning for getDeviceId since it's the only way on older versions
                     @SuppressWarnings("deprecation")
                     String oldDeviceId = tm.getDeviceId();
-                    imei = oldDeviceId;
+                    if (oldDeviceId != null && !oldDeviceId.isEmpty()) {
+                        deviceId = oldDeviceId;
+                        Log.i(TAG, "Device ID obtenido (legacy): " + deviceId);
+                        promise.resolve(deviceId);
+                        return;
+                    }
                 } catch (SecurityException e) {
-                    Log.e(TAG, "SecurityException getting Device ID", e);
+                    Log.w(TAG, "Device ID no accesible: " + e.getMessage());
                 }
             }
-            promise.resolve(imei);
+            
+            String androidId = Settings.Secure.getString(reactContext.getContentResolver(), Settings.Secure.ANDROID_ID);
+            Log.w(TAG, "Usando Android ID: " + androidId);
+            promise.resolve(androidId);
+            
         } catch (Exception e) {
-            Log.e(TAG, "Error getting IMEI: " + e.getMessage());
+            Log.e(TAG, "Error obteniendo identificador: " + e.getMessage());
             promise.reject("ERROR", e.getMessage());
         }
     }
@@ -108,6 +138,8 @@ public class DeviceModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void initPollingService(String imei, String apiUrl, Promise promise) {
         try {
+            Log.i(TAG, "Vinculando dispositivo con IMEI: " + imei);
+            
             reactContext.getSharedPreferences(FinanciaTechPollingService.PREFS_NAME, Context.MODE_PRIVATE)
                 .edit()
                 .putString(FinanciaTechPollingService.KEY_DEVICE_ID, imei)
@@ -115,18 +147,39 @@ public class DeviceModule extends ReactContextBaseJavaModule {
                 .putBoolean(FinanciaTechPollingService.KEY_IS_LINKED, true)
                 .apply();
 
-            if (devicePolicyManager.isDeviceOwnerApp(reactContext.getPackageName())) {
-                devicePolicyManager.addUserRestriction(deviceAdmin, UserManager.DISALLOW_FACTORY_RESET);
-                devicePolicyManager.setUninstallBlocked(deviceAdmin, reactContext.getPackageName(), true);
-                Log.i(TAG, "Provisioning restrictions applied after linking");
+            boolean isDeviceOwner = devicePolicyManager.isDeviceOwnerApp(reactContext.getPackageName());
+            
+            if (isDeviceOwner) {
+                try {
+                    DeviceAdmin.applyLinkedRestrictions(reactContext);
+                } catch (SecurityException e) {
+                    Log.e(TAG, "SecurityException aplicando restricciones: " + e.getMessage());
+                    promise.reject("SECURITY_ERROR", "No se pudieron aplicar las restricciones de seguridad: " + e.getMessage());
+                    return;
+                } catch (Exception e) {
+                    Log.e(TAG, "Error aplicando restricciones: " + e.getMessage());
+                    promise.reject("RESTRICTION_ERROR", "Error al aplicar restricciones: " + e.getMessage());
+                    return;
+                }
+            } else {
+                promise.reject("NOT_DEVICE_OWNER", "El dispositivo no es Device Owner. Debe activarse primero desde financiatech-desktop.");
+                return;
             }
 
-            FinanciaTechPollingService.start(reactContext);
-            Log.i(TAG, "Polling service initialized — IMEI=" + imei);
-            promise.resolve("Polling service started");
+            try {
+                FinanciaTechPollingService.start(reactContext);
+            } catch (Exception e) {
+                Log.e(TAG, "Error iniciando servicio de polling: " + e.getMessage());
+                promise.reject("SERVICE_ERROR", "Error al iniciar servicio de monitoreo: " + e.getMessage());
+                return;
+            }
+            
+            Log.i(TAG, "Dispositivo vinculado exitosamente con IMEI: " + imei);
+            promise.resolve("Dispositivo vinculado correctamente");
+            
         } catch (Exception e) {
-            Log.e(TAG, "Error initializing polling service: " + e.getMessage());
-            promise.reject("ERROR", e.getMessage());
+            Log.e(TAG, "Error fatal vinculando dispositivo: " + e.getMessage());
+            promise.reject("FATAL_ERROR", "Error fatal al vincular dispositivo: " + e.getMessage());
         }
     }
     

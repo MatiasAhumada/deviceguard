@@ -97,8 +97,9 @@ public class DeviceAdmin extends DeviceAdminReceiver {
     private void applyLinkedRestrictions(DevicePolicyManager dpm, ComponentName adminComponent) {
         applyProvisioningRestrictions(dpm, adminComponent);
         dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_SAFE_BOOT);
-        dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_DEBUGGING_FEATURES);
-        Log.i(TAG, "Linked restrictions applied (no debug, no safe boot)");
+        // TODO: Descomentar después de testing
+        // dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_DEBUGGING_FEATURES);
+        Log.i(TAG, "Linked restrictions applied (DEBUG MODE - debugging enabled)");
     }
 
     private void applyFullRestrictions(DevicePolicyManager dpm, ComponentName adminComponent) {
@@ -112,6 +113,18 @@ public class DeviceAdmin extends DeviceAdminReceiver {
         dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS);
         dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_NETWORK_RESET);
         dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_AIRPLANE_MODE);
+        dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_CONFIG_WIFI);
+        dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_CONFIG_BLUETOOTH);
+        dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_ADJUST_VOLUME);
+        dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_OUTGOING_CALLS);
+        dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_INSTALL_APPS);
+        dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_UNINSTALL_APPS);
+        
+        dpm.setKeyguardDisabled(adminComponent, true);
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            dpm.setStatusBarDisabled(adminComponent, true);
+        }
         
         Log.i(TAG, "Full restrictions applied (kiosk mode active)");
     }
@@ -131,6 +144,18 @@ public class DeviceAdmin extends DeviceAdminReceiver {
             dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS);
             dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_NETWORK_RESET);
             dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_AIRPLANE_MODE);
+            dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_CONFIG_WIFI);
+            dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_CONFIG_BLUETOOTH);
+            dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_ADJUST_VOLUME);
+            dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_OUTGOING_CALLS);
+            dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_INSTALL_APPS);
+            dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_UNINSTALL_APPS);
+            
+            dpm.setKeyguardDisabled(adminComponent, true);
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                dpm.setStatusBarDisabled(adminComponent, true);
+            }
             
             Log.i(TAG, "Full restrictions applied via static method");
         }
@@ -140,18 +165,47 @@ public class DeviceAdmin extends DeviceAdminReceiver {
         DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
         ComponentName adminComponent = new ComponentName(context, DeviceAdmin.class);
         
-        if (dpm != null && dpm.isDeviceOwnerApp(context.getPackageName())) {
+        if (dpm == null) {
+            Log.e(TAG, "DevicePolicyManager is null");
+            return;
+        }
+        
+        if (!dpm.isDeviceOwnerApp(context.getPackageName())) {
+            Log.w(TAG, "App is not Device Owner - cannot apply linked restrictions");
+            return;
+        }
+        
+        try {
             applyLinkedRestrictionsStatic(dpm, adminComponent);
             Log.i(TAG, "Linked restrictions applied via static method");
+        } catch (Exception e) {
+            Log.e(TAG, "Error applying linked restrictions: " + e.getMessage(), e);
         }
     }
 
     private static void applyLinkedRestrictionsStatic(DevicePolicyManager dpm, ComponentName adminComponent) {
-        dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_FACTORY_RESET);
-        dpm.setUninstallBlocked(adminComponent, adminComponent.getPackageName(), true);
-        dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_SAFE_BOOT);
-        dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_DEBUGGING_FEATURES);
-        Log.i(TAG, "Linked restrictions applied");
+        try {
+            dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_FACTORY_RESET);
+            dpm.setUninstallBlocked(adminComponent, adminComponent.getPackageName(), true);
+            dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_SAFE_BOOT);
+            
+            // TODO: Descomentar después de testing
+            // dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_DEBUGGING_FEATURES);
+            
+            // TODO: Descomentar después de testing
+            // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            //     try {
+            //         dpm.setGlobalSetting(adminComponent, android.provider.Settings.Global.ADB_ENABLED, "0");
+            //     } catch (Exception e) {
+            //         Log.w(TAG, "Could not disable ADB: " + e.getMessage());
+            //     }
+            // }
+            
+            Log.i(TAG, "Linked restrictions applied successfully (DEBUG MODE - ADB enabled)");
+        } catch (Exception e) {
+            Log.e(TAG, "Error in applyLinkedRestrictionsStatic: " + e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**

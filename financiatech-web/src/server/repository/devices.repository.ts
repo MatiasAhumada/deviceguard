@@ -16,7 +16,7 @@ export class DevicesRepository {
         ...(search && {
           OR: [
             { name: { contains: search, mode: "insensitive" } },
-            { serialNumber: { contains: search, mode: "insensitive" } },
+            { imei: { contains: search, mode: "insensitive" } },
           ],
         }),
       },

@@ -52,3 +52,5 @@ android/app/debug.keystore
 node_modules/
 
 /google-services.json
+
+modules-native-backup/

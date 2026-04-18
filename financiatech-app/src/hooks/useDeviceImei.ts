@@ -6,21 +6,14 @@ import { Platform, NativeModules } from 'react-native';
 const { DeviceModule } = NativeModules;
 
 export interface DeviceIdentity {
-  /** Identificador único del dispositivo usado como "IMEI" en el sistema.
-   *  - Android: androidId (único por app + dispositivo, no requiere permisos)
-   *  - iOS: identifierForVendor
-   *  Nota: el IMEI real requiere permisos de sistema en Android 10+ que Expo
-   *  no puede obtener en modo managed. androidId es el estándar recomendado. */
-  deviceId: string | null;
-  /** Modelo del dispositivo, ej: "Samsung Galaxy A54" */
+  serialNumber: string | null;
   deviceModel: string | null;
-  /** Indica si el identificador ya fue resuelto (evita renders con null) */
   isReady: boolean;
 }
 
 export function useDeviceImei(): DeviceIdentity {
   const [identity, setIdentity] = useState<DeviceIdentity>({
-    deviceId: null,
+    serialNumber: null,
     deviceModel: null,
     isReady: false,
   });
@@ -28,39 +21,33 @@ export function useDeviceImei(): DeviceIdentity {
   useEffect(() => {
     async function resolveDeviceIdentity() {
       try {
-        let deviceId: string | null = null;
+        let serialNumber: string | null = null;
 
         if (Platform.OS === 'android') {
-          // Intentar obtener el IMEI real desde nuestro módulo nativo
           if (DeviceModule && DeviceModule.getDeviceImei) {
             try {
-              const imei = await DeviceModule.getDeviceImei();
-              if (imei && imei.length >= 14) {
-                deviceId = imei;
-                console.log('[DEVICE] IMEI real obtenido:', imei);
+              serialNumber = await DeviceModule.getDeviceImei();
+              if (serialNumber && serialNumber.length >= 8) {
+                console.log('[DEVICE] Serial Number obtenido:', serialNumber);
               } else {
-                console.warn('[DEVICE] IMEI inválido o vacío:', imei);
+                console.warn('[DEVICE] Serial Number inválido:', serialNumber);
+                serialNumber = null;
               }
             } catch (err) {
-              console.error('[DEVICE] Error al obtener IMEI:', err);
+              console.error('[DEVICE] Error obteniendo Serial Number:', err);
             }
-          } else {
-            console.warn('[DEVICE] DeviceModule.getDeviceImei no disponible');
           }
 
-          // Fallback al androidId solo si no se pudo obtener el IMEI
-          if (!deviceId) {
-            deviceId = Application.getAndroidId();
-            console.warn('[DEVICE] Usando androidId como fallback:', deviceId);
+          if (!serialNumber) {
+            serialNumber = Application.getAndroidId();
+            console.warn('[DEVICE] Usando androidId como fallback:', serialNumber);
           }
         } else if (Platform.OS === 'ios') {
-          // identifierForVendor: único por (app vendor, dispositivo).
-          deviceId = await Application.getIosIdForVendorAsync();
+          serialNumber = await Application.getIosIdForVendorAsync();
         }
 
-        // Fallback: si por alguna razón no se obtiene el id (emulador sin Google)
-        if (!deviceId) {
-          deviceId = `${Device.modelName ?? 'unknown'}-${Date.now()}`;
+        if (!serialNumber) {
+          serialNumber = `${Device.modelName ?? 'unknown'}-${Date.now()}`;
         }
 
         const deviceModel =
@@ -68,12 +55,11 @@ export function useDeviceImei(): DeviceIdentity {
           Device.deviceName ??
           'Dispositivo desconocido';
 
-        setIdentity({ deviceId, deviceModel, isReady: true });
+        setIdentity({ serialNumber, deviceModel, isReady: true });
       } catch (error) {
-        // En el peor caso usamos un fallback temporal para no bloquear al usuario
         const fallback = `device-${Platform.OS}-${Date.now()}`;
         setIdentity({
-          deviceId: fallback,
+          serialNumber: fallback,
           deviceModel: Device.modelName ?? 'Dispositivo desconocido',
           isReady: true,
         });

@@ -13,41 +13,34 @@ import { COLORS } from "@/src/constants/theme.constant";
 const { height } = Dimensions.get("window");
 
 export default function LinkingSuccessScreen() {
-  const { deviceName, adminName, deviceId } = useLocalSearchParams<{
+  const { deviceName, adminName, serialNumber } = useLocalSearchParams<{
     deviceName: string;
-    deviceId: string;
+    serialNumber: string;
     adminName: string;
   }>();
 
   const router = useRouter();
   const isBlockedRef = useRef(false);
-  // Instanciar el control de kiosk pero SIN activarlo (enabled=false)
   const kioskControl = useKioskMode(false);
 
-  // Escuchar cambios de estado emitidos por el servicio nativo Java
-  // Esto detecta cuando el servidor marca el dispositivo como bloqueado
   useDeviceStateListener(
-    // onBlocked: el servidor marcó el dispositivo como bloqueado
     async () => {
       if (!isBlockedRef.current) {
         isBlockedRef.current = true;
         router.replace({ pathname: "/device-blocked" });
       }
     },
-    // onUnblocked: el servidor desbloqueó el dispositivo
     async () => {
       await kioskControl.stopKiosk();
     }
   );
 
-  // Verificar estado inicial y detener kiosk si es necesario
   useEffect(() => {
     const checkInitialBlockedState = async () => {
-      if (!deviceId) return;
+      if (!serialNumber) return;
       try {
-        const status = await provisioningService.checkStatus(deviceId as string);
+        const status = await provisioningService.checkStatus(serialNumber as string);
         if (!status.blocked) {
-          // El dispositivo está desbloqueado - asegurar que kiosk esté detenido
           await kioskControl.stopKiosk();
         }
       } catch (e) {
@@ -55,11 +48,8 @@ export default function LinkingSuccessScreen() {
     };
 
     checkInitialBlockedState();
-  }, [deviceId]);
+  }, [serialNumber]);
 
-  // Garantizar que el kiosk NUNCA esté activo en esta pantalla.
-  // Esto cubre el caso donde se navega desde device-blocked con un
-  // desbloqueo remoto y el kiosk todavía pudiera estar corriendo.
   useFocusEffect(
     React.useCallback(() => {
       kioskControl.stopKiosk().catch(() => {});
@@ -67,7 +57,7 @@ export default function LinkingSuccessScreen() {
   );
 
   useEffect(() => {
-    if (!deviceId || Platform.OS !== "android") return;
+    if (!serialNumber || Platform.OS !== "android") return;
     const { DeviceModule } = NativeModules;
     if (!DeviceModule?.initPollingService) return;
     const apiUrl = Constants.expoConfig?.extra?.API_URL;
@@ -75,10 +65,27 @@ export default function LinkingSuccessScreen() {
       console.error("[DG] FATAL: API_URL no está configurada en app.config");
       throw new Error("Falta configurar API_URL en app.config");
     }
-    DeviceModule.initPollingService(deviceId as string, apiUrl)
-      .then(() => console.log("[DG] Background polling service started with IMEI:", deviceId))
-      .catch((e: any) => console.warn("[DG] initPollingService error:", e));
-  }, [deviceId]);
+    
+    console.log("[DG] Iniciando servicio de polling con serialNumber:", serialNumber);
+    
+    DeviceModule.initPollingService(serialNumber as string, apiUrl)
+      .then((result: string) => {
+        console.log("[DG] Servicio de polling iniciado exitosamente:", result);
+      })
+      .catch((error: any) => {
+        console.error("[DG] Error al iniciar servicio de polling:", error);
+        
+        if (error.code === "NOT_DEVICE_OWNER") {
+          console.error("[DG] El dispositivo NO es Device Owner. Debe activarse desde financiatech-desktop primero.");
+        } else if (error.code === "SECURITY_ERROR") {
+          console.error("[DG] Error de seguridad al aplicar restricciones:", error.message);
+        } else if (error.code === "RESTRICTION_ERROR") {
+          console.error("[DG] Error al aplicar restricciones:", error.message);
+        } else {
+          console.error("[DG] Error desconocido:", error.message);
+        }
+      });
+  }, [serialNumber]);
 
   // NOTA: No hay polling local de React Native.
   // El servicio nativo Java emite eventos cuando el estado cambia.

@@ -5,7 +5,7 @@ export const createDeviceSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   type: z.nativeEnum(DeviceType, { required_error: "El tipo es requerido" }),
   model: z.string().optional(),
-  serialNumber: z.string().optional(),
+  imei: z.string().min(1, "El IMEI es requerido"),
   status: z.nativeEnum(DeviceStatus).default(DeviceStatus.ACTIVE),
 });
 
