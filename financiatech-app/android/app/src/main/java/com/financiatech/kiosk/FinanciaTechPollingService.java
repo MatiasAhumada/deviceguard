@@ -242,15 +242,15 @@ public class FinanciaTechPollingService extends Service {
 
     private void pollServer() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String imei = prefs.getString(KEY_DEVICE_ID, null);
+        String serialNumber = prefs.getString(KEY_DEVICE_ID, null);
         String apiUrl = prefs.getString(KEY_API_URL, null);
 
-        if (imei == null || apiUrl == null) {
+        if (serialNumber == null || apiUrl == null) {
             return;
         }
 
         try {
-            String endpoint = apiUrl + "/api/device-syncs/" + imei;
+            String endpoint = apiUrl + "/api/device-syncs/" + serialNumber;
 
             URL url = new URL(endpoint);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -334,15 +334,15 @@ public class FinanciaTechPollingService extends Service {
      */
     private void handleUnlockFallback() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String imei = prefs.getString(KEY_DEVICE_ID, null);
+        String serialNumber = prefs.getString(KEY_DEVICE_ID, null);
         String apiUrl = prefs.getString(KEY_API_URL, null);
 
-        if (imei == null || apiUrl == null) {
+        if (serialNumber == null || apiUrl == null) {
             return;
         }
 
         try {
-            String endpoint = apiUrl + "/api/device-syncs/" + imei;
+            String endpoint = apiUrl + "/api/device-syncs/" + serialNumber;
             
             URL url = new URL(endpoint);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();

@@ -56,6 +56,34 @@ class MainActivity : ReactActivity() {
         val dpm = getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
         val adminComponent = android.content.ComponentName(this, DeviceAdmin::class.java)
         if (dpm.isDeviceOwnerApp(packageName)) {
+            // Auto-conceder permiso READ_PHONE_STATE para acceder a Serial Number e IMEI
+            try {
+                dpm.setPermissionGrantState(
+                    adminComponent,
+                    packageName,
+                    android.Manifest.permission.READ_PHONE_STATE,
+                    android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED
+                )
+                android.util.Log.i("MainActivity", "READ_PHONE_STATE permission auto-granted")
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Failed to grant READ_PHONE_STATE permission", e)
+            }
+            
+            // Auto-conceder permiso POST_NOTIFICATIONS para enviar notificaciones (Android 13+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                try {
+                    dpm.setPermissionGrantState(
+                        adminComponent,
+                        packageName,
+                        android.Manifest.permission.POST_NOTIFICATIONS,
+                        android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED
+                    )
+                    android.util.Log.i("MainActivity", "POST_NOTIFICATIONS permission auto-granted")
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "Failed to grant POST_NOTIFICATIONS permission", e)
+                }
+            }
+            
             dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_FACTORY_RESET)
             dpm.setUninstallBlocked(adminComponent, packageName, true)
             dpm.addUserRestriction(adminComponent, android.os.UserManager.DISALLOW_SAFE_BOOT)
