@@ -28,6 +28,8 @@ public class FinanciaTechFirebaseService extends FirebaseMessagingService {
         super.onMessageReceived(remoteMessage);
         
         Log.d(TAG, "Message received from: " + remoteMessage.getFrom());
+        Log.d(TAG, "Message ID: " + remoteMessage.getMessageId());
+        Log.d(TAG, "Message priority: " + remoteMessage.getPriority());
         
         if (remoteMessage.getData().size() > 0) {
             Log.d(TAG, "Message data payload: " + remoteMessage.getData());
@@ -45,11 +47,14 @@ public class FinanciaTechFirebaseService extends FirebaseMessagingService {
     
     private void handleDataMessage(Map<String, String> data) {
         String action = data.get("action");
+        String type = data.get("type");
         
-        if ("block_device".equals(action)) {
+        Log.d(TAG, "Handling data message - action: " + action + ", type: " + type);
+        
+        if ("block_device".equals(action) || "DEVICE_BLOCKED".equals(type)) {
             Log.i(TAG, "Received BLOCK command via Firebase");
             blockDevice();
-        } else if ("unblock_device".equals(action)) {
+        } else if ("unblock_device".equals(action) || "DEVICE_UNBLOCKED".equals(type)) {
             Log.i(TAG, "Received UNBLOCK command via Firebase");
             unblockDevice();
         }
@@ -62,14 +67,20 @@ public class FinanciaTechFirebaseService extends FirebaseMessagingService {
     }
     
     private void blockDevice() {
+        Log.i(TAG, "Executing blockDevice()");
+        
         SharedPreferences prefs = getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE);
         prefs.edit()
              .putBoolean("isLocked", true)
              .putBoolean("isFullLockdownActive", true)
              .apply();
         
+        Log.d(TAG, "Preferences updated - isLocked: true");
+        
         DeviceAdmin.applyFullRestrictions(getApplicationContext());
         DeviceAdmin.startKioskMode(getApplicationContext());
+        
+        Log.d(TAG, "Restrictions applied, starting MainActivity");
         
         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
         intent.addFlags(
@@ -84,16 +95,24 @@ public class FinanciaTechFirebaseService extends FirebaseMessagingService {
             "Dispositivo Bloqueado",
             "Tu dispositivo ha sido bloqueado por falta de pago"
         );
+        
+        Log.i(TAG, "Block device completed");
     }
     
     private void unblockDevice() {
+        Log.i(TAG, "Executing unblockDevice()");
+        
         SharedPreferences prefs = getSharedPreferences("FinanciaTechPrefs", Context.MODE_PRIVATE);
         prefs.edit()
              .putBoolean("isLocked", false)
              .putBoolean("isFullLockdownActive", false)
              .apply();
         
+        Log.d(TAG, "Preferences updated - isLocked: false");
+        
         DeviceAdmin.stopKioskMode(getApplicationContext());
+        
+        Log.d(TAG, "Kiosk mode stopped, starting MainActivity");
         
         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
         intent.addFlags(
@@ -109,6 +128,8 @@ public class FinanciaTechFirebaseService extends FirebaseMessagingService {
             "Dispositivo Desbloqueado",
             "Tu dispositivo ha sido desbloqueado. ¡Gracias por tu pago!"
         );
+        
+        Log.i(TAG, "Unblock device completed");
     }
     
     private void showNotification(String title, String body) {

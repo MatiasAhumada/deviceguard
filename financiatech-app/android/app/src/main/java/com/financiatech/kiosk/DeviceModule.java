@@ -136,13 +136,13 @@ public class DeviceModule extends ReactContextBaseJavaModule {
      * service de polling para que funcione sin que la app esté abierta.
      */
     @ReactMethod
-    public void initPollingService(String imei, String apiUrl, Promise promise) {
+    public void initPollingService(String serialNumber, String apiUrl, Promise promise) {
         try {
-            Log.i(TAG, "Vinculando dispositivo con IMEI: " + imei);
+            Log.i(TAG, "Vinculando dispositivo con Serial Number: " + serialNumber);
             
             reactContext.getSharedPreferences(FinanciaTechPollingService.PREFS_NAME, Context.MODE_PRIVATE)
                 .edit()
-                .putString(FinanciaTechPollingService.KEY_DEVICE_ID, imei)
+                .putString(FinanciaTechPollingService.KEY_DEVICE_ID, serialNumber)
                 .putString(FinanciaTechPollingService.KEY_API_URL, apiUrl)
                 .putBoolean(FinanciaTechPollingService.KEY_IS_LINKED, true)
                 .apply();
@@ -174,7 +174,7 @@ public class DeviceModule extends ReactContextBaseJavaModule {
                 return;
             }
             
-            Log.i(TAG, "Dispositivo vinculado exitosamente con IMEI: " + imei);
+            Log.i(TAG, "Dispositivo vinculado exitosamente con Serial Number: " + serialNumber);
             promise.resolve("Dispositivo vinculado correctamente");
             
         } catch (Exception e) {

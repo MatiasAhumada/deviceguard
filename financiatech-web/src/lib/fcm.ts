@@ -51,6 +51,8 @@ export const fcmService = {
         android: {
           priority: "high",
           data,
+          collapseKey: payload.type,
+          ttl: 3600000,
         },
       });
 

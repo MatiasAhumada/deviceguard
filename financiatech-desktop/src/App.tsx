@@ -179,17 +179,57 @@ function App() {
 
       setLogs([]);
       setStatus("detecting");
-      appendLog("Iniciando configuración del dispositivo...");
-      appendLog(`Dispositivo detectado: ${connectedDevice}`);
+      appendLog("🚀 Iniciando configuración del dispositivo...");
+      appendLog(`📱 Dispositivo detectado: ${connectedDevice}`);
+      appendLog("");
 
-      appendLog("Verificando configuración del dispositivo...");
-      const accountsOut = await runCommand('adb shell dumpsys account');
-      if (accountsOut.includes('Account {name=')) {
-        appendLog("⚠️ Atención: Hay cuentas configuradas en el dispositivo");
-        appendLog("Esto podría impedir la configuración correcta del modo kiosco");
-      } else {
-        appendLog("✅ Dispositivo listo para configurar");
+      // VERIFICACIÓN PRELIMINAR CRÍTICA
+      appendLog("🔍 Verificando estado del dispositivo...");
+      
+      // 1. Verificar si ya es Device Owner
+      let isAlreadyOwner = false;
+      try {
+        const policyOut = await runCommand('adb shell dumpsys device_policy');
+        if (policyOut.includes('com.financiatech.kiosk/.DeviceAdmin') && 
+            (policyOut.includes('Device Owner:') || policyOut.includes('owner'))) {
+          isAlreadyOwner = true;
+          appendLog("✅ Device Owner ya configurado");
+        }
+      } catch (e) {
+        // Ignorar
       }
+      
+      // 2. Verificar cuentas (BLOQUEANTE si no es Device Owner)
+      if (!isAlreadyOwner) {
+        const accountsOut = await runCommand('adb shell dumpsys account');
+        const hasAccounts = accountsOut.includes('Account {name=');
+        
+        if (hasAccounts) {
+          const accountMatches = accountsOut.match(/Account \{name=([^,]+)/g);
+          const accountNames = accountMatches ? accountMatches.map(m => m.replace('Account {name=', '')) : [];
+          
+          appendLog("");
+          appendLog("❌❌❌ ERROR CRÍTICO ❌❌❌");
+          appendLog("");
+          appendLog("⚠️ El dispositivo tiene cuentas configuradas:");
+          accountNames.forEach(account => appendLog(`   • ${account}`));
+          appendLog("");
+          appendLog("🚫 NO SE PUEDE CONFIGURAR DEVICE OWNER CON CUENTAS ACTIVAS");
+          appendLog("");
+          appendLog("🔧 SOLUCIÓN REQUERIDA:");
+          appendLog("   1️⃣ Haz FACTORY RESET del dispositivo");
+          appendLog("   2️⃣ Durante el setup inicial, OMITE la configuración de cuenta Google");
+          appendLog("   3️⃣ Habilita 'Depuración USB' en Opciones de Desarrollador");
+          appendLog("   4️⃣ Conecta el dispositivo y vuelve a ejecutar esta herramienta");
+          appendLog("");
+          throw new Error("Dispositivo con cuentas activas. Factory reset requerido.");
+        }
+        
+        appendLog("✅ Sin cuentas configuradas");
+      }
+      
+      appendLog("✅ Verificación preliminar completada");
+      appendLog("");
 
       await delay(1000);
 
@@ -227,40 +267,62 @@ function App() {
       setStatus("configuring");
       appendLog("Configurando permisos de administrador...");
 
-      let isAlreadyOwner = false;
-      try {
-        const policyOut = await runCommand('adb shell dumpsys device_policy');
-        if (policyOut.includes('com.financiatech.kiosk/.DeviceAdmin') && (policyOut.includes('Device Owner:') || policyOut.includes('owner'))) {
-          isAlreadyOwner = true;
-        }
-      } catch (e) {
-        // Si falla el checkeo preliminar, lo intentamos configurar más abajo
-      }
-
       if (isAlreadyOwner) {
-        appendLog('✅ El dispositivo ya estaba configurado como modo kiosco');
+        appendLog('✅ El dispositivo ya estaba configurado como Device Owner');
       } else {
         appendLog("Activando modo de control total (Device Owner)...");
+        appendLog("⚠️ IMPORTANTE: Este paso requiere que el dispositivo NO tenga cuentas configuradas");
+        
         const ownerCmd = 'adb shell dpm set-device-owner com.financiatech.kiosk/.DeviceAdmin';
         try {
           const ownerOut = await runCommand(ownerCmd);
-          appendLog(`Respuesta: ${ownerOut}`);
+          appendLog(`Respuesta del sistema: ${ownerOut}`);
+          
           if (ownerOut.includes('Success')) {
-              appendLog('✅ Modo kiosco activado correctamente');
+              appendLog('✅ Device Owner activado correctamente');
           } else if (ownerOut.includes('already set') || ownerOut.includes('is already set')) {
-              appendLog('✅ El modo kiosco ya estaba activado');
+              appendLog('✅ Device Owner ya estaba activado');
+          } else if (ownerOut.includes('Not allowed')) {
+              throw new Error("El sistema rechazó la configuración. Verifica que el dispositivo esté en factory reset limpio.");
           } else {
-              throw new Error(`Respuesta desconocida: ${ownerOut}`);
+              appendLog(`⚠️ Respuesta inesperada: ${ownerOut}`);
+              throw new Error(`Respuesta desconocida del sistema: ${ownerOut}`);
           }
         } catch (ownerErr: any) {
            const errMsg = String(ownerErr);
-           if (errMsg.includes("already some accounts")) {
-             throw new Error("No se pudo activar el modo kiosco: hay cuentas de usuario en el dispositivo. Eliminelas desde Configuración > Cuentas.");
-           } else if (errMsg.includes("Success") || errMsg.includes("already set") || errMsg.includes("is already set") || errMsg.includes("ya está")) {
-             appendLog('✅ Modo kiosco activado correctamente');
+           
+           if (errMsg.includes("already some accounts") || errMsg.includes("accounts on the device")) {
+             appendLog("❌ ERROR: Hay cuentas de usuario en el dispositivo");
+             appendLog("");
+             appendLog("⚠️ SOLUCIÓN:");
+             appendLog("1. Haz FACTORY RESET del dispositivo");
+             appendLog("2. NO configures ninguna cuenta Google durante el setup");
+             appendLog("3. Habilita depuración USB en Opciones de Desarrollador");
+             appendLog("4. Vuelve a ejecutar esta herramienta");
+             throw new Error("No se puede activar Device Owner: hay cuentas en el dispositivo. Haz factory reset sin configurar cuentas.");
+           } else if (errMsg.includes("Success") || errMsg.includes("already set") || errMsg.includes("is already set")) {
+             appendLog('✅ Device Owner activado correctamente');
+           } else if (errMsg.includes("Not allowed")) {
+             throw new Error("El sistema rechazó la configuración. El dispositivo debe estar en estado factory reset limpio.");
            } else {
+             appendLog(`❌ Error inesperado: ${errMsg}`);
              throw new Error(`Error de configuración: ${errMsg}`);
            }
+        }
+        
+        // Verificar que realmente se configuró
+        await delay(1000);
+        try {
+          const verifyOut = await runCommand('adb shell dumpsys device_policy');
+          if (verifyOut.includes('com.financiatech.kiosk/.DeviceAdmin') && 
+              (verifyOut.includes('Device Owner:') || verifyOut.includes('owner'))) {
+            appendLog('✅ Verificación exitosa: Device Owner configurado correctamente');
+          } else {
+            appendLog('⚠️ ADVERTENCIA: No se pudo verificar la configuración de Device Owner');
+            appendLog('El dispositivo podría no tener los permisos necesarios');
+          }
+        } catch (e) {
+          appendLog('⚠️ No se pudo verificar la configuración (esto es normal en algunos dispositivos)');
         }
       }
 

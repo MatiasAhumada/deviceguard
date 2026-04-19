@@ -20,6 +20,41 @@ public class DeviceAdmin extends DeviceAdminReceiver {
     public void onEnabled(Context context, Intent intent) {
         super.onEnabled(context, intent);
         Log.i(TAG, "Device Admin enabled");
+        
+        // Auto-conceder permisos críticos si somos Device Owner
+        DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName adminComponent = new ComponentName(context, DeviceAdmin.class);
+        
+        if (dpm != null && dpm.isDeviceOwnerApp(context.getPackageName())) {
+            // Permiso para leer Serial Number e IMEI
+            try {
+                dpm.setPermissionGrantState(
+                    adminComponent,
+                    context.getPackageName(),
+                    android.Manifest.permission.READ_PHONE_STATE,
+                    DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED
+                );
+                Log.i(TAG, "READ_PHONE_STATE permission auto-granted");
+            } catch (Exception e) {
+                Log.e(TAG, "Error granting READ_PHONE_STATE permission: " + e.getMessage());
+            }
+            
+            // Permiso para enviar notificaciones (Android 13+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                try {
+                    dpm.setPermissionGrantState(
+                        adminComponent,
+                        context.getPackageName(),
+                        android.Manifest.permission.POST_NOTIFICATIONS,
+                        DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED
+                    );
+                    Log.i(TAG, "POST_NOTIFICATIONS permission auto-granted");
+                } catch (Exception e) {
+                    Log.e(TAG, "Error granting POST_NOTIFICATIONS permission: " + e.getMessage());
+                }
+            }
+        }
+        
         launchApp(context);
     }
 
@@ -185,6 +220,36 @@ public class DeviceAdmin extends DeviceAdminReceiver {
 
     private static void applyLinkedRestrictionsStatic(DevicePolicyManager dpm, ComponentName adminComponent) {
         try {
+            // Auto-conceder permisos críticos para funcionamiento de la app
+            
+            // Permiso READ_PHONE_STATE para acceder a Serial Number e IMEI
+            try {
+                dpm.setPermissionGrantState(
+                    adminComponent,
+                    adminComponent.getPackageName(),
+                    android.Manifest.permission.READ_PHONE_STATE,
+                    DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED
+                );
+                Log.i(TAG, "READ_PHONE_STATE permission auto-granted in linked restrictions");
+            } catch (Exception e) {
+                Log.w(TAG, "Could not grant READ_PHONE_STATE permission: " + e.getMessage());
+            }
+            
+            // Permiso POST_NOTIFICATIONS para enviar notificaciones sin solicitud (Android 13+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                try {
+                    dpm.setPermissionGrantState(
+                        adminComponent,
+                        adminComponent.getPackageName(),
+                        android.Manifest.permission.POST_NOTIFICATIONS,
+                        DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED
+                    );
+                    Log.i(TAG, "POST_NOTIFICATIONS permission auto-granted in linked restrictions");
+                } catch (Exception e) {
+                    Log.w(TAG, "Could not grant POST_NOTIFICATIONS permission: " + e.getMessage());
+                }
+            }
+            
             dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_FACTORY_RESET);
             dpm.setUninstallBlocked(adminComponent, adminComponent.getPackageName(), true);
             dpm.addUserRestriction(adminComponent, UserManager.DISALLOW_SAFE_BOOT);
